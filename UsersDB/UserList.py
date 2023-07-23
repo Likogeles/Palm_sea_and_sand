@@ -10,6 +10,32 @@ class UserList:
     def __init__(self):
         self.load()
 
+    def __insert_user(self, cur, user):
+        '''
+        Вставить пользователя в таблицу
+        :param cur: курсор БД
+        :param user: Пользователь
+        '''
+        cur.execute(f"""
+                    INSERT INTO users VALUES
+                    ('{user.get_user_id()}','{user.get_culture()}','{user.get_historic()}','{user.get_religious()}','{user.get_art()}','{user.get_natural()}','{user.get_popularity()}')
+                    """)
+
+    def __create_user_table(self, cur):
+        '''
+        Создать таблицу пользователей
+        :param cur: курсор БД
+        '''
+        cur.execute("""CREATE TABLE users(
+                    user_id varchar(255) UNIQUE,
+                    is_culture FLOAT,
+                    is_historic FLOAT,
+                    is_religious FLOAT,
+                    is_art FLOAT,
+                    is_natural FLOAT,
+                    popularity FLOAT
+                    )""")
+
     # Удаление и пересохранение списка пользователей
     def save(self):
         '''
@@ -22,15 +48,10 @@ class UserList:
             table_check = cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users';")
             if len(table_check.fetchall()) == 0:
                 cur.execute("""DROP TABLE users;""")
-            cur.execute("""CREATE TABLE users(
-            user_id varchar(255)
-            )""")
+            self.__create_user_table(cur)
 
             for user in self.__userList:
-                cur.execute(f"""
-                INSERT INTO users VALUES
-                ('{user.user_id}')
-                """)
+                self.__insert_user(cur, user)
 
             con.commit()
             con.close()
@@ -57,7 +78,7 @@ class UserList:
 
             self.__userList.clear()
             for user in result:
-                user_id = user[1]
+                user_id = user[0]
                 if user_id != "None":
                     user_id = int(user_id)
                 else:
@@ -74,32 +95,25 @@ class UserList:
         Добавить пользователя
         '''
         for old_user in self.__userList:
-            if str(user_id) == old_user.user_id:
-                print("UsersList: save error: Пользователь уже существует")
+            if user_id == old_user.get_user_id():
+                print("UsersList: add_user error: Пользователь уже существует")
                 return False
         new_user = User(user_id)
         self.__userList.append(new_user)
-
         try:
             con = sqlite3.connect(self.db_name)
             cur = con.cursor()
 
             table_check = cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users';")
             if len(table_check.fetchall()) == 0:
-                cur.execute("""CREATE TABLE users(
-                user_id varchar(255)
-                )""")
-
-            cur.execute(f"""
-            INSERT INTO users VALUES
-            ('{new_user.user_id}')
-            """)
+                self.__create_user_table(cur)
+            self.__insert_user(cur, User(user_id))
 
             con.commit()
             con.close()
             return True
         except Exception as ex:
-            print("UsersList: save error: " + str(ex))
+            print("UsersList: add user error: " + str(ex))
         return False
 
     # Получить польщователя по его ID. Возвращает None если пользователя не существует
@@ -108,7 +122,7 @@ class UserList:
         Получить польщователя по его ID. Возвращает None если пользователя не существует
         '''
         for user in self.__userList:
-            if user.user_id == user_id:
+            if user.get_user_id() == user_id:
                 return user
         return None
 

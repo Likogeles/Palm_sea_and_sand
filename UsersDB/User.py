@@ -1,23 +1,50 @@
-from typing import Annotated
-
 class User:
+    # ID пользователя
     __user_id = None
+    # Культурность
     __is_culture = None
+    # Историчность
     __is_historic = None
+    # Религиозность
     __is_religious = None
+    # Искусство
     __is_art = None
+    # Природность
     __is_natural = None
+    # Популярность
     __popularity = None
+    # Время прибытия (Не храниться в БД!)
     __time_arrival = None
+    # Время отъезда (Не храниться в БД!)
     __time_departure = None
+    # Место (Не храниться в БД!)
     __place = None
+
+    def __str__(self):
+        return f"{self.__user_id}:\t{self.__is_culture}\t{self.__is_historic}\t" \
+               f"{self.__is_religious}\t{self.__is_art}\t{self.__is_natural}\t" \
+               f"{self.__popularity}"
 
     def __init__(self, user_id):
         '''
         Класс пользователя
         :param user_id: Int - ID пользователя в телеграм
         '''
-        self.user_id = user_id
+        self.__user_id = int(user_id)
+
+    def set_user_id(self, user_id):
+        '''
+        Устанавливает ID пользователя
+        :param user_id: Int - ID пользователя
+        '''
+        self.__user_id = user_id
+
+    def get_user_id(self):
+        '''
+        Возвращает ID пользователя
+        :return: Int - ID пользователя
+        '''
+        return int(self.__user_id or 0)
 
     def set_culture(self, is_culture):
         '''
@@ -145,5 +172,3 @@ class User:
         '''
         return self.__place
 
-    def __str__(self):
-        return f"Id: {self.user_id}"
