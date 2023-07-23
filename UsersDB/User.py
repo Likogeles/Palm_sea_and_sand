@@ -163,7 +163,7 @@ class User:
         return self.__is_natural
 
     def add_popularity(self, added_popularity_num):
-        self.__is_popularity += added_popularity_num
+        self.__popularity += added_popularity_num
         self.__update_user_in_db()
 
     def set_popularity(self, popularity):
