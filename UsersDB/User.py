@@ -7,17 +7,17 @@ class User:
     # ID пользователя
     __user_id = None
     # Культурность
-    __is_culture = None
+    __is_culture = 0.5
     # Историчность
-    __is_historic = None
+    __is_historic = 0.5
     # Религиозность
-    __is_religious = None
+    __is_religious = 0.5
     # Искусство
-    __is_art = None
+    __is_art = 0.5
     # Природность
-    __is_natural = None
+    __is_natural = 0.5
     # Популярность
-    __popularity = None
+    __popularity = 0.5
     # Время прибытия (Не храниться в БД!)
     __time_arrival = None
     # Время отъезда (Не храниться в БД!)
@@ -38,18 +38,18 @@ class User:
         self.__user_id = int(user_id)
 
     def __update_user_in_db(self):
-        # try:
-        con = sqlite3.connect(users_db_name)
-        cur = con.cursor()
-        cur.execute(f"""
-                UPDATE users
-                SET is_culture = '{str(self.__is_culture)}', is_historic = '{str(self.__is_historic)}', is_religious = '{str(self.__is_religious)}', is_art = '{str(self.__is_art)}', is_natural = '{str(self.__is_natural)}', popularity = '{str(self.__popularity)}'
-                WHERE user_id = {str(self.__user_id)};
-                """)
-        con.commit()
-        con.close()
-        # except Exception as ex:
-        #     print("User: update_user_in_db error: " + str(ex))
+        try:
+            con = sqlite3.connect(users_db_name)
+            cur = con.cursor()
+            cur.execute(f"""
+                    UPDATE users
+                    SET is_culture = '{str(self.__is_culture)}', is_historic = '{str(self.__is_historic)}', is_religious = '{str(self.__is_religious)}', is_art = '{str(self.__is_art)}', is_natural = '{str(self.__is_natural)}', popularity = '{str(self.__popularity)}'
+                    WHERE user_id = {str(self.__user_id)};
+                    """)
+            con.commit()
+            con.close()
+        except Exception as ex:
+            print("User: update_user_in_db error: " + str(ex))
 
     def set_user_id(self, user_id):
         '''
@@ -66,6 +66,10 @@ class User:
         '''
         return int(self.__user_id or 0)
 
+    def add_culture(self, added_culture_num):
+        self.__is_culture += added_culture_num
+        self.__update_user_in_db()
+
     def set_culture(self, is_culture):
         '''
         Устанавливает значение культуры
@@ -80,6 +84,10 @@ class User:
         :return: Float - значение культуры
         '''
         return self.__is_culture
+
+    def add_historic(self, added_historic_num):
+        self.__is_historic += added_historic_num
+        self.__update_user_in_db()
 
     def set_historic(self, is_historic):
         '''
@@ -96,6 +104,10 @@ class User:
         '''
         return self.__is_historic
 
+    def add_religious(self, added_religious_num):
+        self.__is_religious += added_religious_num
+        self.__update_user_in_db()
+
     def set_religious(self, is_religious):
         '''
         Устанавливает значение религии
@@ -110,6 +122,11 @@ class User:
         :return: Float - значение религии
         '''
         return self.__is_religious
+
+
+    def add_art(self, added_art_num):
+        self.__is_art += added_art_num
+        self.__update_user_in_db()
 
     def set_art(self, is_art):
         '''
@@ -126,6 +143,10 @@ class User:
         '''
         return self.__is_art
 
+    def add_natural(self, added_natural_num):
+        self.__is_natural += added_natural_num
+        self.__update_user_in_db()
+
     def set_natural(self, is_natural):
         '''
         Устанавливает значение природности
@@ -140,6 +161,10 @@ class User:
         :return: Float - значение природности
         '''
         return self.__is_natural
+
+    def add_popularity(self, added_popularity_num):
+        self.__is_popularity += added_popularity_num
+        self.__update_user_in_db()
 
     def set_popularity(self, popularity):
         '''
