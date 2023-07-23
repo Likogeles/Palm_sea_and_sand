@@ -18,6 +18,8 @@ class User:
     __is_natural = 0.5
     # Популярность
     __popularity = 0.5
+    # Желаемое время пребывания в точке интереса
+    __time = 0.5
     # Время прибытия (Не храниться в БД!)
     __time_arrival = None
     # Время отъезда (Не храниться в БД!)
@@ -180,6 +182,25 @@ class User:
         :return: Float - значение популярности
         '''
         return self.__popularity
+
+    def add_time(self, added_time_num):
+        self.__time += added_time_num
+        self.__update_user_in_db()
+
+    def set_time(self, time):
+        '''
+        Устанавливает значение желаемого времени пребывания в точке
+        :param popularity: Float - параметр желаемого времени пребывания в точке
+        '''
+        self.__time = time
+        self.__update_user_in_db()
+
+    def get_time(self):
+        '''
+        Возвращает значение желаемого времени пребывания в точке
+        :return: Float - значение желаемого времени пребывания в точке
+        '''
+        return self.__time
 
     def set_time_arrival(self, time_arrival):
         '''
