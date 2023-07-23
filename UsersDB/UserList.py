@@ -1,6 +1,6 @@
 import sqlite3
 from UsersDB.User import User
-from options import db_name
+from options import users_db_name
 
 
 class UserList:
@@ -41,7 +41,7 @@ class UserList:
         Удаление и пересохранение списка пользователей
         '''
         try:
-            con = sqlite3.connect(db_name)
+            con = sqlite3.connect(users_db_name)
             cur = con.cursor()
 
             table_check = cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users';")
@@ -65,7 +65,7 @@ class UserList:
         Загрузка списка пользователей
         '''
         try:
-            con = sqlite3.connect(db_name)
+            con = sqlite3.connect(users_db_name)
             cur = con.cursor()
 
             table_check = cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users';")
@@ -100,7 +100,7 @@ class UserList:
         new_user = User(user_id)
         self.__userList.append(new_user)
         # try:
-        con = sqlite3.connect(db_name)
+        con = sqlite3.connect(users_db_name)
         cur = con.cursor()
 
         table_check = cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users';")

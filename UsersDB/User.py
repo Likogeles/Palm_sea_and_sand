@@ -1,6 +1,6 @@
 import sqlite3
 
-from options import db_name
+from options import users_db_name
 
 
 class User:
@@ -39,7 +39,7 @@ class User:
 
     def __update_user_in_db(self):
         # try:
-        con = sqlite3.connect(db_name)
+        con = sqlite3.connect(users_db_name)
         cur = con.cursor()
         cur.execute(f"""
                 UPDATE users
