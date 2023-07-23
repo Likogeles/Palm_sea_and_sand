@@ -1,3 +1,8 @@
+import sqlite3
+
+from options import db_name
+
+
 class User:
     # ID пользователя
     __user_id = None
@@ -32,12 +37,27 @@ class User:
         '''
         self.__user_id = int(user_id)
 
+    def __update_user_in_db(self):
+        # try:
+        con = sqlite3.connect(db_name)
+        cur = con.cursor()
+        cur.execute(f"""
+                UPDATE users
+                SET is_culture = '{str(self.__is_culture)}', is_historic = '{str(self.__is_historic)}', is_religious = '{str(self.__is_religious)}', is_art = '{str(self.__is_art)}', is_natural = '{str(self.__is_natural)}', popularity = '{str(self.__popularity)}'
+                WHERE user_id = {str(self.__user_id)};
+                """)
+        con.commit()
+        con.close()
+        # except Exception as ex:
+        #     print("User: update_user_in_db error: " + str(ex))
+
     def set_user_id(self, user_id):
         '''
         Устанавливает ID пользователя
         :param user_id: Int - ID пользователя
         '''
         self.__user_id = user_id
+        self.__update_user_in_db()
 
     def get_user_id(self):
         '''
@@ -52,6 +72,7 @@ class User:
         :param is_culture: Float - параметр культуры
         '''
         self.__is_culture = is_culture
+        self.__update_user_in_db()
 
     def get_culture(self):
         '''
@@ -66,6 +87,7 @@ class User:
         :param is_historic: Float - параметр историчности
         '''
         self.__is_historic = is_historic
+        self.__update_user_in_db()
 
     def get_historic(self):
         '''
@@ -80,6 +102,7 @@ class User:
         :param is_religious: Float - параметр религии
         '''
         self.__is_religious = is_religious
+        self.__update_user_in_db()
 
     def get_religious(self):
         '''
@@ -94,6 +117,7 @@ class User:
         :param is_art: Float - параметр искусства
         '''
         self.__is_art = is_art
+        self.__update_user_in_db()
 
     def get_art(self):
         '''
@@ -108,6 +132,7 @@ class User:
         :param is_natural: Float - параметр природности
         '''
         self.__is_natural = is_natural
+        self.__update_user_in_db()
 
     def get_natural(self):
         '''
@@ -122,6 +147,7 @@ class User:
         :param popularity: Float - параметр популярности
         '''
         self.__popularity = popularity
+        self.__update_user_in_db()
 
     def get_popularity(self):
         '''

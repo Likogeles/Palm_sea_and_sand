@@ -1,11 +1,10 @@
 import sqlite3
 from UsersDB.User import User
+from options import db_name
 
 
 class UserList:
     __userList = list()
-
-    db_name = "TomasBot.db"
 
     def __init__(self):
         self.load()
@@ -28,12 +27,12 @@ class UserList:
         '''
         cur.execute("""CREATE TABLE users(
                     user_id varchar(255) UNIQUE,
-                    is_culture FLOAT,
-                    is_historic FLOAT,
-                    is_religious FLOAT,
-                    is_art FLOAT,
-                    is_natural FLOAT,
-                    popularity FLOAT
+                    is_culture varchar(255),
+                    is_historic varchar(255),
+                    is_religious varchar(255),
+                    is_art varchar(255),
+                    is_natural varchar(255),
+                    popularity varchar(255)
                     )""")
 
     # Удаление и пересохранение списка пользователей
@@ -42,7 +41,7 @@ class UserList:
         Удаление и пересохранение списка пользователей
         '''
         try:
-            con = sqlite3.connect(self.db_name)
+            con = sqlite3.connect(db_name)
             cur = con.cursor()
 
             table_check = cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users';")
@@ -66,7 +65,7 @@ class UserList:
         Загрузка списка пользователей
         '''
         try:
-            con = sqlite3.connect(self.db_name)
+            con = sqlite3.connect(db_name)
             cur = con.cursor()
 
             table_check = cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users';")
@@ -100,21 +99,21 @@ class UserList:
                 return False
         new_user = User(user_id)
         self.__userList.append(new_user)
-        try:
-            con = sqlite3.connect(self.db_name)
-            cur = con.cursor()
+        # try:
+        con = sqlite3.connect(db_name)
+        cur = con.cursor()
 
-            table_check = cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users';")
-            if len(table_check.fetchall()) == 0:
-                self.__create_user_table(cur)
-            self.__insert_user(cur, User(user_id))
+        table_check = cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users';")
+        if len(table_check.fetchall()) == 0:
+            self.__create_user_table(cur)
+        self.__insert_user(cur, User(user_id))
 
-            con.commit()
-            con.close()
-            return True
-        except Exception as ex:
-            print("UsersList: add user error: " + str(ex))
-        return False
+        con.commit()
+        con.close()
+        return True
+        # except Exception as ex:
+        #     print("UsersList: add user error: " + str(ex))
+        # return False
 
     # Получить польщователя по его ID. Возвращает None если пользователя не существует
     def get_user_by_id(self, user_id):
