@@ -20,26 +20,28 @@ class User:
     __popularity = 0.5
     # Желаемое время пребывания в точке интереса
     __time = 0.5
+    # Пользователь хочет передвигаться пешком
+    __is_transport = -1
     # Время прибытия
     __time_arrival = None
     # Время отъезда
     __time_departure = None
-    # Место прибытия
-    __place_arrival = None
-    # Место отъезда
-    __place_departure = None
+    # Место прибытия (широта и долгота)
+    __place_arrival_alt = None
+    __place_arrival_long = None
+    # Место отъезда (широта и долгота)
+    __place_departure_alt = None
+    __place_departure_long = None
 
     def __str__(self):
-        pre_name = "ID\t\t\tculture\thistory\treligy\tart\t\tnature\tpopular\ttime\ttime_arrival\ttime_departure" \
-                   "\tplace_arrival\tplace_departure\n"
-        return pre_name + f"{self.__user_id}:\t\t{self.__is_culture}\t\t{self.__is_historic}\t\t" \
-               f"{self.__is_religious}\t\t{self.__is_art}\t\t{self.__is_natural}\t\t" \
-               f"{self.__popularity}\t\t{self.__time}\t\t{self.__time_arrival}\t{self.__time_departure}\t" \
-               f"{self.__place_arrival}\t{self.__place_departure}"
+        return f"{self.__user_id}:\t{self.__is_culture}\t{self.__is_historic}\t" \
+               f"{self.__is_religious}\t{self.__is_art}\t{self.__is_natural}\t" \
+               f"{self.__popularity}\t{self.__time}\t{self.__is_transport}\t{self.__time_arrival}\t{self.__time_departure}\t" \
+               f"{self.__place_arrival_alt} {self.__place_arrival_long}\t{self.__place_departure_alt} {self.__place_departure_long}"
 
     def __init__(self, user_id):
         '''
-        Класс пользователя
+        Класс пользователя\n
         :param user_id: Int - ID пользователя в телеграм
         '''
         self.__user_id = int(user_id)
@@ -53,8 +55,10 @@ class User:
                     SET is_culture = '{str(self.__is_culture)}', is_historic = '{str(self.__is_historic)}',
                     is_religious = '{str(self.__is_religious)}', is_art = '{str(self.__is_art)}', is_natural =
                     '{str(self.__is_natural)}', popularity = '{str(self.__popularity)}', time = '{str(self.__time)}'
+                    , transport = '{str(self.__is_transport)}'
                     , time_arrival = '{str(self.__time_arrival)}', time_departure = '{str(self.__time_departure)}',
-                    place_arrival = '{str(self.__place_arrival)}', place_departure = '{str(self.__place_departure)}'
+                    place_arrival = '{str(self.__place_arrival_alt)} {str(self.__place_arrival_long)}',
+                    place_departure = '{str(self.__place_departure_alt)} {str(self.__place_departure_long)}'
                     WHERE user_id = {str(self.__user_id)};
                     """)
             con.commit()
@@ -64,7 +68,7 @@ class User:
 
     def set_user_id(self, user_id):
         '''
-        Устанавливает ID пользователя
+        Устанавливает ID пользователя\n
         :param user_id: Int - ID пользователя
         '''
         self.__user_id = user_id
@@ -72,18 +76,23 @@ class User:
 
     def get_user_id(self):
         '''
-        Возвращает ID пользователя
+        Возвращает ID пользователя\n
         :return: Int - ID пользователя
         '''
         return int(self.__user_id or 0)
 
     def add_culture(self, added_culture_num):
+        '''
+        Прибавляет значение к культуре\n
+        :param added_culture_num: Float - значение, которое необходимо прибавить к культуре
+        :return:
+        '''
         self.__is_culture += float(added_culture_num)
         self.__update_user_in_db()
 
     def set_culture(self, is_culture):
         '''
-        Устанавливает значение культуры
+        Устанавливает значение культуры\n
         :param is_culture: Float - параметр культуры
         '''
         self.__is_culture = float(is_culture)
@@ -91,37 +100,45 @@ class User:
 
     def get_culture(self):
         '''
-        Возвращает значение культуры
+        Возвращает значение культуры\n
         :return: Float - значение культуры
         '''
         return self.__is_culture
 
     def add_historic(self, added_historic_num):
+        '''
+        Прибавляет значение к историчности\n
+        :param added_historic_num: Float - значение, которое необходимо прибавить к историчности\n
+        '''
         self.__is_historic += float(added_historic_num)
         self.__update_user_in_db()
 
     def set_historic(self, is_historic):
         '''
-        Устанавливает значение историчности
-        :param is_historic: Float - параметр историчности
+        Устанавливает значение историчности\n
+        :param is_historic: Float - параметр историчности\n
         '''
         self.__is_historic = float(is_historic)
         self.__update_user_in_db()
 
     def get_historic(self):
         '''
-        Возвращает значение историчности
-        :return: Float - значение историчности
+        Возвращает значение историчности\n
+        :return: Float - значение историчности\n
         '''
         return self.__is_historic
 
     def add_religious(self, added_religious_num):
+        '''
+        Прибавляет значение к религии\n
+        :param added_religious_num: Float - значение, которое необходимо прибить к историчности
+        '''
         self.__is_religious += float(added_religious_num)
         self.__update_user_in_db()
 
     def set_religious(self, is_religious):
         '''
-        Устанавливает значение религии
+        Устанавливает значение религии\n
         :param is_religious: Float - параметр религии
         '''
         self.__is_religious = float(is_religious)
@@ -129,18 +146,22 @@ class User:
 
     def get_religious(self):
         '''
-        Возвращает значение религии
+        Возвращает значение религии\n
         :return: Float - значение религии
         '''
         return self.__is_religious
 
     def add_art(self, added_art_num):
+        '''
+        Прибаляет значение к искусству\n
+        :param added_art_num: Float - значение, которое необходимо прибавить к искусству\n
+        '''
         self.__is_art += float(added_art_num)
         self.__update_user_in_db()
 
     def set_art(self, is_art):
         '''
-        Устанавливает значение искусства
+        Устанавливает значение искусства\n
         :param is_art: Float - параметр искусства
         '''
         self.__is_art = float(is_art)
@@ -148,18 +169,23 @@ class User:
 
     def get_art(self):
         '''
-        Возвращает значение искусства
+        Возвращает значение искусства\n
         :return: Float - значение искусства
         '''
         return self.__is_art
 
     def add_natural(self, added_natural_num):
+        '''
+        Прибавляет значение к природности\n
+        :param added_natural_num: Float - значение, которое необходимо прибавить к природности
+        :return:
+        '''
         self.__is_natural += float(added_natural_num)
         self.__update_user_in_db()
 
     def set_natural(self, is_natural):
         '''
-        Устанавливает значение природности
+        Устанавливает значение природности\n
         :param is_natural: Float - параметр природности
         '''
         self.__is_natural = float(is_natural)
@@ -167,18 +193,22 @@ class User:
 
     def get_natural(self):
         '''
-        Возвращает значение природности
+        Возвращает значение природности\n
         :return: Float - значение природности
         '''
         return self.__is_natural
 
     def add_popularity(self, added_popularity_num):
+        '''
+        Прибавляет значение к популярности\n
+        :param added_popularity_num: Float - значение, которое необходимо прибавить к популярности
+        '''
         self.__popularity += float(added_popularity_num)
         self.__update_user_in_db()
 
     def set_popularity(self, popularity):
         '''
-        Устанавливает значение популярности
+        Устанавливает значение популярности\n
         :param popularity: Float - параметр популярности
         '''
         self.__popularity = float(popularity)
@@ -186,18 +216,22 @@ class User:
 
     def get_popularity(self):
         '''
-        Возвращает значение популярности
+        Возвращает значение популярности\n
         :return: Float - значение популярности
         '''
         return self.__popularity
 
     def add_time(self, added_time_num):
+        '''
+        Прибавляет значение к желаемому времени прибывания в точке\n
+        :param added_time_num: Float - значение, которое необходимо прибавить к желаемомому времени пребывания в точке
+        '''
         self.__time += float(added_time_num)
         self.__update_user_in_db()
 
     def set_time(self, time):
         '''
-        Устанавливает значение желаемого времени пребывания в точке
+        Устанавливает значение желаемого времени пребывания в точке\n
         :param popularity: Float - параметр желаемого времени пребывания в точке
         '''
         self.__time = float(time)
@@ -205,14 +239,33 @@ class User:
 
     def get_time(self):
         '''
-        Возвращает значение желаемого времени пребывания в точке
+        Возвращает значение желаемого времени пребывания в точке\n
         :return: Float - значение желаемого времени пребывания в точке
         '''
         return self.__time
 
+    def set_transport(self, transport):
+        '''
+        Устанавливает значение желания пользователя передвигаться на транспорте\n
+        -1: Пешком (автоматически)\n
+        1: На автобусе\n
+        :param transport: Int - параметр желания пользователя передвигаться на транспорте
+        '''
+        self.__is_transport = int(transport)
+        self.__update_user_in_db()
+
+    def get_transport(self):
+        '''
+        Возвращает значение желания пользователя передвигаться на транспорте\n
+        -1: Пешком (автоматически)\n
+        1: На автобусе\n
+        :return: Int - значение желания пользователя передвигаться на транспорте
+        '''
+        return self.__is_transport
+
     def set_time_arrival(self, time_arrival):
         '''
-        Устанавливает значение времени прибытия
+        Устанавливает значение времени прибытия\n
         :param time_arrival: String - значение времени прибытия
         '''
         self.__time_arrival = time_arrival
@@ -220,14 +273,14 @@ class User:
 
     def get_time_arrival(self):
         '''
-        Возвращает значение времени прибытия
+        Возвращает значение времени прибытия\n
         :return: String - значение времени прибытия
         '''
         return self.__time_arrival
 
     def set_time_departure(self, time_departure):
         '''
-        Устанавливает значение времени прибытия
+        Устанавливает значение времени прибытия\n
         :param time_departure: String - значение времени прибытия
         '''
         self.__time_departure = time_departure
@@ -235,37 +288,39 @@ class User:
 
     def get_time_departure(self):
         '''
-        Возвращает значение времени отъезда
+        Возвращает значение времени отъезда\n
         :return: String - значение времени отъезда
         '''
         return self.__time_departure
 
     def set_place_arrival(self, place_arrival):
         '''
-        Устанавливает значение места прибытия в формате строки
-        :param place: String - значение места прибытия
+        Устанавливает значение места прибытия\n
+        :param place: (Float, Float) - значение места прибытия
         '''
-        self.__place_arrival = place_arrival
+        self.__place_arrival_alt = place_arrival[0]
+        self.__place_arrival_long = place_arrival[1]
         self.__update_user_in_db()
 
     def get_place_arrival(self):
         '''
-        Возвращает значение места прибытия в формате строки
-        :return: String - значение места прибытия
+        Возвращает значение места прибытия\n
+        :return: (Float, Float) - значение места прибытия
         '''
-        return self.__place_arrival
+        return self.__place_arrival_alt, self.__place_arrival_long
 
     def set_place_departure(self, place_departure):
         '''
-        Устанавливает значение места отъезда в формате строки
-        :param place: String - значение места отъезда
+        Устанавливает значение места отъезда\n
+        :param place: (Float, Float) - значение места отъезда
         '''
-        self.__place_departure = place_departure
+        self.__place_departure_alt = place_departure[0]
+        self.__place_departure_long = place_departure[1]
         self.__update_user_in_db()
 
     def get_place_departure(self):
         '''
-        Возвращает значение места отъезда в формате строки
-        :return: String - значение места отъезда
+        Возвращает значение места отъезда\n
+        :return: (Float, Float) - значение места отъезда
         '''
-        return self.__place_departure
+        return self.__place_departure_alt, self.__place_departure_long
