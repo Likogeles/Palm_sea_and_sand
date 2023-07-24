@@ -1,10 +1,6 @@
-from sklearn import preprocessing
-import seaborn as sns
-import matplotlib.pyplot as plt
 import osmnx as ox
 import numpy as np
 import pandas as pd
-import geopandas as gpd
 
 # Тэги для запросов OSM API
 tags = [ 
