@@ -17,7 +17,10 @@ class UserList:
         '''
         cur.execute(f"""
                     INSERT INTO users VALUES
-                    ('{user.get_user_id()}','{user.get_culture()}','{user.get_historic()}','{user.get_religious()}','{user.get_art()}','{user.get_natural()}','{user.get_popularity()}')
+                    ('{user.get_user_id()}','{user.get_culture()}','{user.get_historic()}','{user.get_religious()}',
+                    '{user.get_art()}','{user.get_natural()}','{user.get_popularity()}','{user.get_time()}',
+                    '{user.get_time_arrival()}','{user.get_time_departure()}',
+                    '{user.get_place_arrival()}','{user.get_place_departure()}')
                     """)
 
     def __create_user_table(self, cur):
@@ -32,7 +35,12 @@ class UserList:
                     is_religious varchar(255),
                     is_art varchar(255),
                     is_natural varchar(255),
-                    popularity varchar(255)
+                    popularity varchar(255),
+                    time varchar(255),
+                    time_arrival varchar(255),
+                    time_departure varchar(255),
+                    place_arrival varchar(255),
+                    place_departure varchar(255)
                     )""")
 
     # Удаление и пересохранение списка пользователей
@@ -82,7 +90,19 @@ class UserList:
                     user_id = int(user_id)
                 else:
                     user_id = None
-                self.__userList.append(User(user_id))
+                new_user = User(user_id)
+                new_user.set_culture(float(user[1]))
+                new_user.set_historic(float(user[2]))
+                new_user.set_religious(float(user[3]))
+                new_user.set_art(float(user[4]))
+                new_user.set_natural(float(user[5]))
+                new_user.set_popularity(float(user[6]))
+                new_user.set_time(float(user[7]))
+                new_user.set_time_arrival(user[8])
+                new_user.set_time_departure(user[9])
+                new_user.set_place_arrival(user[10])
+                new_user.set_place_departure(user[11])
+                self.__userList.append(new_user)
             con.close()
         except Exception as ex:
             print("UsersList: load error: " + str(ex))
@@ -99,24 +119,24 @@ class UserList:
                 return False
         new_user = User(user_id)
         self.__userList.append(new_user)
-        # try:
-        con = sqlite3.connect(users_db_name)
-        cur = con.cursor()
+        try:
+            con = sqlite3.connect(users_db_name)
+            cur = con.cursor()
 
-        table_check = cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users';")
-        if len(table_check.fetchall()) == 0:
-            self.__create_user_table(cur)
-        self.__insert_user(cur, User(user_id))
+            table_check = cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users';")
+            if len(table_check.fetchall()) == 0:
+                self.__create_user_table(cur)
+            self.__insert_user(cur, User(user_id))
 
-        con.commit()
-        con.close()
-        return True
-        # except Exception as ex:
-        #     print("UsersList: add user error: " + str(ex))
-        # return False
+            con.commit()
+            con.close()
+            return True
+        except Exception as ex:
+            print("UsersList: add user error: " + str(ex))
+        return False
 
     # Получить польщователя по его ID. Возвращает None если пользователя не существует
-    def get_user_by_id(self, user_id):
+    def get_user_by_id(self, user_id) -> User:
         '''
         Получить польщователя по его ID. Возвращает None если пользователя не существует
         '''
