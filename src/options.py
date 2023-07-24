@@ -1,1 +1,1 @@
-users_db_name = "TomasBot.db"
+users_db_name = "../data/TomasBot.db"
