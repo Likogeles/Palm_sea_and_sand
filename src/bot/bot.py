@@ -23,9 +23,8 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
-# Addiing user_data, keyboard with different time and flag for location tracking
+# Addiing keyboard with different time and flag for location tracking
 
-user_data = []
 kb = [
     [types.KeyboardButton(text="0:00"),
      types.KeyboardButton(text="12:00")],
@@ -56,11 +55,16 @@ keyboard = types.ReplyKeyboardMarkup(
     keyboard=kb,
     resize_keyboard=True,
 )
-flag = False
+
+place_arrival_flag = False
+place_departure_flag = False
+time_arrival_flag = False
+time_departure_flag = False
 
 # STARTING POINT
 
 userList = UserList()
+print(*userList.get_all_users())
 @dp.message_handler(commands=['start', 'help'])
 async def send_welcome(message: types.Message):
     userList.add_user(message.from_user.id)
@@ -80,44 +84,79 @@ async def send_welcome(message: types.Message):
 
 # Маршрут
 
-"""
 @dp.message_handler(text=["Маршрут"])
 async def geolocation(message: types.Message):
-    await message.answer("Введите адрес пребывания или отправьте геопозицию", reply_markup=types.ReplyKeyboardRemove())
+    global place_arrival_flag
+    place_arrival_flag = True
+    await message.answer("Введите адрес прибывания или отправьте геопозицию", reply_markup=types.ReplyKeyboardRemove())
 
 @dp.message_handler(content_types=['location'])
 async def handle_loc(message):
+    global place_arrival_flag
+    global place_departure_flag
     lat = message.location['latitude']
     lon = message.location['longitude']
-    user.__place = (lat, lon)
-    print(user.__place)
+    user = userList.get_user_by_id(message.from_user.id)
+    if place_arrival_flag:
+        user.set_place_arrival((lat, lon))    
+        place_arrival_flag = False
+        await arrival_time(message)
+    if place_departure_flag:
+        user.set_place_departure((lat, lon))    
+        place_departure_flag = False
+        await departure_time(message)
 
-@dp.message_handler(content_types=['location', 'message'])
 async def arrival_time(message: types.Message):
-    await message.answer("Когда вы прибываете в город?", reply_markup=keyboard)
-
-@dp.message_handler(text=["Маршрут"])
-async def geolocation(message: types.Message):
-    await message.answer("Введите адрес отбытия или отправьте геопозицию", reply_markup=types.ReplyKeyboardRemove())
-
-@dp.message_handler(content_types=['location', 'message'])
-async def arrival_time(message: types.Message):
-    await message.answer("Когда вы уезжаете из города?", reply_markup=keyboard)
+    global time_arrival_flag
+    time_arrival_flag = True
+    await message.answer("Во сколько вы прибываете?", reply_markup=keyboard)
+    
+async def departure_time(message: types.Message):
+    global time_departure_flag
+    time_departure_flag = True
+    await message.answer("Во сколько уезжаете?", reply_markup=keyboard)
 
 @dp.message_handler()
 async def message_accept(message: types.Message):
+    global place_arrival_flag
+    global place_departure_flag
+    global time_arrival_flag
+    global time_departure_flag
+    if place_arrival_flag or place_departure_flag:
+        # Место для кода получения координаты из адреса
+        lat = 38.939715
+        lon = 46.207076
+        user = userList.get_user_by_id(message.from_user.id)
+        if place_arrival_flag:
+            user.set_place_arrival((lat, lon))
+            await arrival_time(message)
+        elif place_departure_flag:
+            user.set_place_departure((lat, lon))
+            await departure_time(message)
+        place_arrival_flag = False
+        place_departure_flag = False
+            
 
-    # putting arrival time in user's data
+    if time_arrival_flag or time_departure_flag:
+        result = re.fullmatch(r'\d{1,2}:\d\d', message.text)
+        if result:
+            user = userList.get_user_by_id(message.from_user.id)
+            if time_arrival_flag:
+                user.set_time_arrival(message.text)
+                time_arrival_flag = False
+                place_departure_flag = True
+                await message.answer("Введите адрес отбытия или отправьте геопозицию", reply_markup=types.ReplyKeyboardRemove())
+            if time_departure_flag:
+                user.set_time_departure(message.text)
+                time_departure_flag = False
+                await message.answer("Отлично!", reply_markup=types.ReplyKeyboardRemove())
+        else:
+            await message.answer("Время введено в неправильном формате")
 
-    result = re.fullmatch(r'\d{1,2}:\d\d', message.text)
-    if result:
-        user_data.append(message.text)
-        message.reply("")
-"""
 
 # Анкета
-
 """
+
 @dp.message_handler(text=["Анкета"])
 async def start_form(message: types.Message):
     btn_prior_1 = InlineKeyboardButton(text="Кино", callback_data="prior_cinema")
@@ -164,7 +203,6 @@ async def resume_question(call: types.CallbackQuery):
     #elif call.data == "history_yes" or call.data == "history_no":
     if call.data == "history_yes" or call.data == "history_no":
         if call.data == "history_yes":
-            user_data.append("Да")
             user = userList.get_user_by_id(call.from_user.id)
             user.add_historic(0.3)
             user.add_culture(0.2)
@@ -172,7 +210,6 @@ async def resume_question(call: types.CallbackQuery):
             user.add_popularity(0.1)
             user.add_time(-0.1)
         else:
-            user_data.append("Нет")
             user = userList.get_user_by_id(call.from_user.id)
             user.add_historic(-0.1)
             user.add_culture(-0.2)
@@ -190,19 +227,16 @@ async def resume_question(call: types.CallbackQuery):
 
     if call.data == "teenage" or call.data == "young" or call.data == "adult":
         if call.data == "teenage":
-            user_data.append("teenage")
             user = userList.get_user_by_id(call.from_user.id)
             user.add_religious(-0.2)
             user.add_popularity(0.3)
             user.add_natural(0.1)
             user.add_time(0.3)
         elif call.data == "young":
-            user_data.append("young")
             user = userList.get_user_by_id(call.from_user.id)
             user.add_popularity(0.2)
             user.add_time(0.2)
         elif call.data == "adult":
-            user_data.append("adult")
             user = userList.get_user_by_id(call.from_user.id)
             user.add_religious(0.2)
             user.add_popularity(-0.1)
@@ -219,13 +253,11 @@ async def resume_question(call: types.CallbackQuery):
 
     elif call.data == "activ_yes" or call.data == "activ_no":
         if call.data == "activ_yes":
-            user_data.append("Да")
             user = userList.get_user_by_id(call.from_user.id)
             user.add_historic(0.1)
             user.add_natural(0.3)
             user.add_time(0.3)
         else:
-            user_data.append("Нет")
             user = userList.get_user_by_id(call.from_user.id)
             user.add_historic(-0.1)
             user.add_art(0.1)
@@ -239,7 +271,6 @@ async def resume_question(call: types.CallbackQuery):
 
     elif call.data == "art_yes" or call.data == "art_no":
         if call.data == "art_yes":
-            user_data.append("Да")
             user = userList.get_user_by_id(call.from_user.id)
             user.add_historic(0.1)
             user.add_culture(0.2)
@@ -248,7 +279,6 @@ async def resume_question(call: types.CallbackQuery):
             user.add_popularity(0.2)
             user.add_time(0.2)
         else:
-            user_data.append("Нет")
             user = userList.get_user_by_id(call.from_user.id)
             user.add_historic(-0.1)
             user.add_culture(-0.1)
@@ -266,7 +296,6 @@ async def resume_question(call: types.CallbackQuery):
 
     elif call.data == "avto" or call.data == "hiking":
         if call.data == "avto":
-            user_data.append("На автомобиле")
             user = userList.get_user_by_id(call.from_user.id)
             user.add_historic(-0.2)
             user.add_religious(-0.1)
@@ -274,7 +303,6 @@ async def resume_question(call: types.CallbackQuery):
             user.add_natural(-0.2)
             user.add_time(-0.2)
         else:
-            user_data.append("Пешком")
             user = userList.get_user_by_id(call.from_user.id)
             user.add_historic(0.2)
             user.add_religious(0.1)
@@ -291,15 +319,12 @@ async def resume_question(call: types.CallbackQuery):
 
     elif call.data == "advanture" or call.data == "calm":
         if call.data == "advanture":
-            user_data.append("Авантюрный")
-            user_data.append("Авантюрный")
             user = userList.get_user_by_id(call.from_user.id)
             user.add_religious(-0.3)
             user.add_natural(-0.2)
             user.add_popularity(0.3)
             user.add_time(-0.2)
         else:
-            user_data.append("Спокойный")
             user = userList.get_user_by_id(call.from_user.id)
             user.add_religious(0.2)
             user.add_natural(0.2)
