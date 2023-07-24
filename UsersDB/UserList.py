@@ -17,7 +17,10 @@ class UserList:
         '''
         cur.execute(f"""
                     INSERT INTO users VALUES
-                    ('{user.get_user_id()}','{user.get_culture()}','{user.get_historic()}','{user.get_religious()}','{user.get_art()}','{user.get_natural()}','{user.get_popularity()}','{user.get_time()}')
+                    ('{user.get_user_id()}','{user.get_culture()}','{user.get_historic()}','{user.get_religious()}',
+                    '{user.get_art()}','{user.get_natural()}','{user.get_popularity()}','{user.get_time()}',
+                    '{user.get_time_arrival()}','{user.get_time_departure()}',
+                    '{user.get_place_arrival()}','{user.get_place_departure()}')
                     """)
 
     def __create_user_table(self, cur):
@@ -33,7 +36,11 @@ class UserList:
                     is_art varchar(255),
                     is_natural varchar(255),
                     popularity varchar(255),
-                    time varchar(255)
+                    time varchar(255),
+                    time_arrival varchar(255),
+                    time_departure varchar(255),
+                    place_arrival varchar(255),
+                    place_departure varchar(255)
                     )""")
 
     # Удаление и пересохранение списка пользователей
@@ -91,6 +98,10 @@ class UserList:
                 new_user.set_natural(float(user[5]))
                 new_user.set_popularity(float(user[6]))
                 new_user.set_time(float(user[7]))
+                new_user.set_time_arrival(user[8])
+                new_user.set_time_departure(user[9])
+                new_user.set_place_arrival(user[10])
+                new_user.set_place_departure(user[11])
                 self.__userList.append(new_user)
             con.close()
         except Exception as ex:
