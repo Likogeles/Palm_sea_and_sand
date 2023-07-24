@@ -125,7 +125,7 @@ class UserList:
         return False
 
     # Получить польщователя по его ID. Возвращает None если пользователя не существует
-    def get_user_by_id(self, user_id):
+    def get_user_by_id(self, user_id) -> User:
         '''
         Получить польщователя по его ID. Возвращает None если пользователя не существует
         '''
