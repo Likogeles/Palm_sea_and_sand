@@ -83,7 +83,15 @@ class UserList:
                     user_id = int(user_id)
                 else:
                     user_id = None
-                self.__userList.append(User(user_id))
+                new_user = User(user_id)
+                new_user.set_culture(float(user[1]))
+                new_user.set_historic(float(user[2]))
+                new_user.set_religious(float(user[3]))
+                new_user.set_art(float(user[4]))
+                new_user.set_natural(float(user[5]))
+                new_user.set_popularity(float(user[6]))
+                new_user.set_time(float(user[7]))
+                self.__userList.append(new_user)
             con.close()
         except Exception as ex:
             print("UsersList: load error: " + str(ex))

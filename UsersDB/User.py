@@ -30,7 +30,7 @@ class User:
     def __str__(self):
         return f"{self.__user_id}:\t{self.__is_culture}\t{self.__is_historic}\t" \
                f"{self.__is_religious}\t{self.__is_art}\t{self.__is_natural}\t" \
-               f"{self.__popularity}"
+               f"{self.__popularity}\t{self.__time}\t{self.__time_arrival}\t{self.__time_departure}\t{self.__place}"
 
     def __init__(self, user_id):
         '''
@@ -45,7 +45,9 @@ class User:
             cur = con.cursor()
             cur.execute(f"""
                     UPDATE users
-                    SET is_culture = '{str(self.__is_culture)}', is_historic = '{str(self.__is_historic)}', is_religious = '{str(self.__is_religious)}', is_art = '{str(self.__is_art)}', is_natural = '{str(self.__is_natural)}', popularity = '{str(self.__popularity)}'
+                    SET is_culture = '{str(self.__is_culture)}', is_historic = '{str(self.__is_historic)}',
+                    is_religious = '{str(self.__is_religious)}', is_art = '{str(self.__is_art)}', is_natural =
+                    '{str(self.__is_natural)}', popularity = '{str(self.__popularity)}', time = '{str(self.__time)}'
                     WHERE user_id = {str(self.__user_id)};
                     """)
             con.commit()
@@ -69,7 +71,7 @@ class User:
         return int(self.__user_id or 0)
 
     def add_culture(self, added_culture_num):
-        self.__is_culture += added_culture_num
+        self.__is_culture += float(added_culture_num)
         self.__update_user_in_db()
 
     def set_culture(self, is_culture):
@@ -77,7 +79,7 @@ class User:
         Устанавливает значение культуры
         :param is_culture: Float - параметр культуры
         '''
-        self.__is_culture = is_culture
+        self.__is_culture = float(is_culture)
         self.__update_user_in_db()
 
     def get_culture(self):
@@ -88,7 +90,7 @@ class User:
         return self.__is_culture
 
     def add_historic(self, added_historic_num):
-        self.__is_historic += added_historic_num
+        self.__is_historic += float(added_historic_num)
         self.__update_user_in_db()
 
     def set_historic(self, is_historic):
@@ -96,7 +98,7 @@ class User:
         Устанавливает значение историчности
         :param is_historic: Float - параметр историчности
         '''
-        self.__is_historic = is_historic
+        self.__is_historic = float(is_historic)
         self.__update_user_in_db()
 
     def get_historic(self):
@@ -107,7 +109,7 @@ class User:
         return self.__is_historic
 
     def add_religious(self, added_religious_num):
-        self.__is_religious += added_religious_num
+        self.__is_religious += float(added_religious_num)
         self.__update_user_in_db()
 
     def set_religious(self, is_religious):
@@ -115,7 +117,7 @@ class User:
         Устанавливает значение религии
         :param is_religious: Float - параметр религии
         '''
-        self.__is_religious = is_religious
+        self.__is_religious = float(is_religious)
         self.__update_user_in_db()
 
     def get_religious(self):
@@ -125,9 +127,8 @@ class User:
         '''
         return self.__is_religious
 
-
     def add_art(self, added_art_num):
-        self.__is_art += added_art_num
+        self.__is_art += float(added_art_num)
         self.__update_user_in_db()
 
     def set_art(self, is_art):
@@ -135,7 +136,7 @@ class User:
         Устанавливает значение искусства
         :param is_art: Float - параметр искусства
         '''
-        self.__is_art = is_art
+        self.__is_art = float(is_art)
         self.__update_user_in_db()
 
     def get_art(self):
@@ -146,7 +147,7 @@ class User:
         return self.__is_art
 
     def add_natural(self, added_natural_num):
-        self.__is_natural += added_natural_num
+        self.__is_natural += float(added_natural_num)
         self.__update_user_in_db()
 
     def set_natural(self, is_natural):
@@ -154,7 +155,7 @@ class User:
         Устанавливает значение природности
         :param is_natural: Float - параметр природности
         '''
-        self.__is_natural = is_natural
+        self.__is_natural = float(is_natural)
         self.__update_user_in_db()
 
     def get_natural(self):
@@ -165,7 +166,7 @@ class User:
         return self.__is_natural
 
     def add_popularity(self, added_popularity_num):
-        self.__popularity += added_popularity_num
+        self.__popularity += float(added_popularity_num)
         self.__update_user_in_db()
 
     def set_popularity(self, popularity):
@@ -173,7 +174,7 @@ class User:
         Устанавливает значение популярности
         :param popularity: Float - параметр популярности
         '''
-        self.__popularity = popularity
+        self.__popularity = float(popularity)
         self.__update_user_in_db()
 
     def get_popularity(self):
@@ -184,7 +185,7 @@ class User:
         return self.__popularity
 
     def add_time(self, added_time_num):
-        self.__time += added_time_num
+        self.__time += float(added_time_num)
         self.__update_user_in_db()
 
     def set_time(self, time):
@@ -192,7 +193,7 @@ class User:
         Устанавливает значение желаемого времени пребывания в точке
         :param popularity: Float - параметр желаемого времени пребывания в точке
         '''
-        self.__time = time
+        self.__time = float(time)
         self.__update_user_in_db()
 
     def get_time(self):
