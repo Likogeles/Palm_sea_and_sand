@@ -1,14 +1,19 @@
 import logging
 import re
 
+import json
+from UsersDB.User import User
+
+
 from os import environ
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from src.PlacesDB.PlaceList import PlaceList
-from src.UsersDB.UserList import UserList
+
+from PlacesDB.PlaceList import PlaceList
+from UsersDB.UserList import UserList
 
 API_TOKEN = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 bot = Bot(API_TOKEN)
@@ -61,7 +66,6 @@ userList = UserList()
 placeList = PlaceList()
 print(*userList.get_all_users())
 
-
 @dp.message_handler(commands=['start', 'help'])
 async def send_welcome(message: types.Message):
     userList.add_user(message.from_user.id)
@@ -79,13 +83,11 @@ async def send_welcome(message: types.Message):
     await message.reply("Привет!\nЯ бот, который поможет проложить маршрут", reply_markup=keyboard)
     await bot.send_sticker(message.from_user.id, sticker = "CAACAgIAAxkBAAEJwlpkun7HJX19BUAerEIc3G7jVD4RjgACrRgAAnmFiUi3haSlMSLa5S8E")
 
-# Маршрут
-
-
 @dp.message_handler(text=["Маршрут"])
 async def geolocation(message: types.Message):
     userList.set_user_flag(message.from_user.id, 'place_arrival_flag', True)
     await message.answer("Введите адрес прибывания или отправьте геопозицию", reply_markup=types.ReplyKeyboardRemove())
+
 
 
 @dp.message_handler(content_types=['location'])
@@ -155,6 +157,7 @@ async def message_accept(message: types.Message):
 # Анкета
 """
 
+
 @dp.message_handler(text=["Анкета"])
 async def start_form(message: types.Message):
     btn_prior_1 = InlineKeyboardButton(text="Кино", callback_data="prior_cinema")
@@ -191,11 +194,13 @@ async def start_form(message: types.Message):
     await message.answer("Тебе нравится история?", reply_markup=keyboard_inline)
 """
 
+
 @dp.callback_query_handler(
     text=["history_yes", "history_no", "vegan_yes", "vegan_no", "sugar_yes",
           "sugar_no", "teenage", "young", "adult", "aged", "ancient", "answer_bar", "answer_club", "avto", "hiking",
         "activ_yes", "activ_no", "art_yes", "art_no", "advanture", "calm"])
 async def resume_question(call: types.CallbackQuery):
+
 
     # Тебе нравится история?
 
