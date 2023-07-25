@@ -162,9 +162,9 @@ class UserList:
         time_arrival_flag - флаг времени прибытия\n
         time_departure_flag - флаг времени отбытия\n
         '''
-        for user in self.__userList:
-            if user.get_user_id() == user_id:
-                user.set_flag(flag_name, flag)
+        for user_num in range(len(self.__userList)):
+            if self.__userList[user_num].get_user_id() == user_id:
+                self.__userList[user_num].set_flag(flag_name, flag)
 
     def get_user_flag(self, user_id, flag_name):
         '''

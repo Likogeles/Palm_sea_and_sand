@@ -40,10 +40,14 @@ class User:
     }
 
     def __str__(self):
-        return f"{self.__user_id}:\t{self.__is_culture}\t{self.__is_historic}\t" \
-               f"{self.__is_religious}\t{self.__is_art}\t{self.__is_natural}\t" \
-               f"{self.__popularity}\t{self.__time}\t{self.__is_transport}\t{self.__time_arrival}\t{self.__time_departure}\t" \
-               f"{self.__place_arrival_alt} {self.__place_arrival_long}\t{self.__place_departure_alt} {self.__place_departure_long}"
+
+        flags_str = str(self.__flags)
+
+        return f"{self.__user_id}: {self.__is_culture} {self.__is_historic} " \
+               f"{self.__is_religious} {self.__is_art} {self.__is_natural} " \
+               f"{self.__popularity} {self.__time} {self.__is_transport} {self.__time_arrival} {self.__time_departure} " \
+               f"{self.__place_arrival_alt} {self.__place_arrival_long} {self.__place_departure_alt} {self.__place_departure_long}" \
+               f"\n{flags_str}\n"
 
     def __init__(self, user_id):
         '''
@@ -53,6 +57,7 @@ class User:
         self.__user_id = int(user_id)
 
     def get_flag(self, flag_name):
+        # print(f"{self.__user_id}: Получение флага {flag_name} ({str(self.__flags[flag_name])})")
         '''
         Возвращает значение флага пользователя по названию\n
         :param flag_name: String - название флага\n
@@ -71,6 +76,7 @@ class User:
         return None
 
     def set_flag(self, flag_name, flag):
+        # print(f"{self.__user_id}: Установка флага {flag_name} на {str(flag)}")
         '''
         Устанавливает значение флага пользователя по названию\n
         :param flag_name: String - название флага\n
