@@ -1,7 +1,9 @@
 import logging
 import re
+
 import json
 from UsersDB.User import User
+
 
 from os import environ
 
@@ -9,20 +11,24 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
+
+from PlacesDB.PlaceList import PlaceList
 from UsersDB.UserList import UserList
 
-API_TOKEN = environ.get('API_TOKEN')
+API_TOKEN = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 bot = Bot(API_TOKEN)
 
 # Configure logging
+
 logging.basicConfig(level=logging.INFO)
 
 # Initialize bot and dispatcher
+
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
-# Addiing user_data, keyboard with different time and flag for location tracking
 
-user_data = []
+# Addiing keyboard with different time and flag for location tracking
+
 kb = [
     [types.KeyboardButton(text="0:00"),
      types.KeyboardButton(text="12:00")],
@@ -53,10 +59,13 @@ keyboard = types.ReplyKeyboardMarkup(
     keyboard=kb,
     resize_keyboard=True,
 )
-flag = False
 
 # STARTING POINT
+
 userList = UserList()
+placeList = PlaceList()
+print(*userList.get_all_users())
+
 @dp.message_handler(commands=['start', 'help'])
 async def send_welcome(message: types.Message):
     userList.add_user(message.from_user.id)
@@ -74,54 +83,80 @@ async def send_welcome(message: types.Message):
     await message.reply("Привет!\nЯ бот, который поможет проложить маршрут", reply_markup=keyboard)
     await bot.send_sticker(message.from_user.id, sticker = "CAACAgIAAxkBAAEJwlpkun7HJX19BUAerEIc3G7jVD4RjgACrRgAAnmFiUi3haSlMSLa5S8E")
 
-
-# АНКЕТА
-
 @dp.message_handler(text=["Маршрут"])
 async def geolocation(message: types.Message):
-    await message.answer("Введите адрес пребывания или отправьте геопозицию", reply_markup=types.ReplyKeyboardRemove())
+    userList.set_user_flag(message.from_user.id, 'place_arrival_flag', True)
+    await message.answer("Введите адрес прибывания или отправьте геопозицию", reply_markup=types.ReplyKeyboardRemove())
+
+
 
 @dp.message_handler(content_types=['location'])
 async def handle_loc(message):
     lat = message.location['latitude']
     lon = message.location['longitude']
-    user.__place = (lat, lon)
-    print(user.__place)
+    user = userList.get_user_by_id(message.from_user.id)
+    if userList.get_user_flag(message.from_user.id, 'place_arrival_flag'):
+        user.set_place_arrival((lat, lon))
+        userList.set_user_flag(message.from_user.id, 'place_arrival_flag', False)
 
-@dp.message_handler(text=["Лоооол"])
-async def arrival_time(message: types.Message):
-    await message.answer("Когда вы прибываете в город?", reply_markup=keyboard)
+        userList.set_user_flag(message.from_user.id, 'time_arrival_flag', True)
+        await message.answer("Во сколько вы прибываете?", reply_markup=keyboard)
+    if userList.get_user_flag(message.from_user.id, 'place_departure_flag'):
+        user.set_place_departure((lat, lon))
+        userList.set_user_flag(message.from_user.id, 'place_departure_flag', False)
+
+        userList.set_user_flag(message.from_user.id, 'time_departure_flag', True)
+        await message.answer("Во сколько уезжаете?", reply_markup=keyboard)
+
 
 @dp.message_handler()
 async def message_accept(message: types.Message):
+    if message.text == "Анкета":
+        btn1 = InlineKeyboardButton(text="Да", callback_data="history_yes")
+        btn2 = InlineKeyboardButton(text="Нет", callback_data="history_no")
+        keyboard_inline = InlineKeyboardMarkup().add(btn1, btn2)
+        await message.answer("Хорошо, тогда начнем опрос", reply_markup=types.ReplyKeyboardRemove())
+        await message.answer("Тебе нравится история?", reply_markup=keyboard_inline)
+    elif userList.get_user_flag(message.from_user.id, 'place_arrival_flag') or userList.get_user_flag(message.from_user.id, 'place_departure_flag'):
+        # Место для кода получения координаты из адреса
+        lat = 38.939715
+        lon = 46.207076
+        user = userList.get_user_by_id(message.from_user.id)
+        if userList.get_user_flag(message.from_user.id, 'place_arrival_flag'):
+            user.set_place_arrival((lat, lon))
 
-    # putting arrival time in user's data
+            userList.set_user_flag(message.from_user.id, 'time_arrival_flag', True)
 
-    result = re.fullmatch(r'\d{1,2}:\d\d', message.text)
-    if result:
-        user_data.append(message.text)
-        message.reply("")
-    await bot.send_message(message.from_user.id, message.text)
-    
-@dp.message_handler(commands=['start', 'help'])
-async def send_welcome(message: types.Message):
-    kb = [
-        [
-            types.KeyboardButton(text="Маршрут"),
-            types.KeyboardButton(text="Анкета")
-        ],
-    ]
-    keyboard = types.ReplyKeyboardMarkup(
-        keyboard=kb,
-        resize_keyboard=True,
-        input_field_placeholder="Выберите, что вы хотите"
-    )
+            await message.answer("Во сколько вы прибываете?", reply_markup=keyboard)
+        elif userList.get_user_flag(message.from_user.id, 'place_departure_flag'):
+            user.set_place_departure((lat, lon))
 
-    # This handler will be called when user sends `/start` or `/help` command
+            userList.set_user_flag(message.from_user.id, 'time_departure_flag', True)
+            await message.answer("Во сколько уезжаете?", reply_markup=keyboard)
+        userList.set_user_flag(message.from_user.id, 'place_arrival_flag', False)
+        userList.set_user_flag(message.from_user.id, 'place_departure_flag', False)
 
-    await message.reply("Привет!\nЯ бот, который поможет проложить маршрут", reply_markup=keyboard)
-    await bot.send_sticker(message.from_user.id,
-                           sticker="CAACAgIAAxkBAAEJwlpkun7HJX19BUAerEIc3G7jVD4RjgACrRgAAnmFiUi3haSlMSLa5S8E")
+    elif userList.get_user_flag(message.from_user.id, 'time_arrival_flag') or userList.get_user_flag(message.from_user.id, 'time_departure_flag'):
+        result = re.fullmatch(r'\d{1,2}:\d\d', message.text)
+        if result:
+            user = userList.get_user_by_id(message.from_user.id)
+            if userList.get_user_flag(message.from_user.id, 'time_arrival_flag'):
+                user.set_time_arrival(message.text)
+                userList.set_user_flag(message.from_user.id, 'time_arrival_flag', False)
+                userList.set_user_flag(message.from_user.id, 'place_departure_flag', True)
+                await message.answer("Введите адрес отбытия или отправьте геопозицию", reply_markup=types.ReplyKeyboardRemove())
+            if userList.get_user_flag(message.from_user.id, 'time_departure_flag'):
+                user.set_time_departure(message.text)
+                userList.set_user_flag(message.from_user.id, 'time_departure_flag', False)
+                await message.answer("Отлично!", reply_markup=types.ReplyKeyboardRemove())
+        else:
+            await message.answer("Время введено в неправильном формате")
+    # print(userList.get_user_by_id(message.from_user.id))
+
+
+# Анкета
+"""
+
 
 @dp.message_handler(text=["Анкета"])
 async def start_form(message: types.Message):
@@ -140,7 +175,6 @@ async def start_form(message: types.Message):
 
 arr_answer = []
 
-
 @dp.callback_query_handler(text=["prior_cinema", "prior_theatre", "prior_museum", "prior_bar", "prior_club"])
 async def track_question(call: types.CallbackQuery):
     if call.data == "prior_cinema" or call.data == "prior_theatre" or call.data == "prior_museum" or call.data == "prior_bar" or call.data == "prior_club":
@@ -151,39 +185,36 @@ async def track_question(call: types.CallbackQuery):
             else:
                 await call.message.answer("В порядке приоритета: " + str(arr_answer))
 
+@dp.message_handler(text=["Анкета"])
+async def start_form(message: types.Message):
+    btn1 = InlineKeyboardButton(text="Да", callback_data="history_yes")
+    btn2 = InlineKeyboardButton(text="Нет", callback_data="history_no")
+    keyboard_inline = InlineKeyboardMarkup().add(btn1, btn2)
+    await message.answer("Хорошо, тогда начнем опрос", reply_markup=types.ReplyKeyboardRemove())
+    await message.answer("Тебе нравится история?", reply_markup=keyboard_inline)
+"""
+
 
 @dp.callback_query_handler(
     text=["history_yes", "history_no", "vegan_yes", "vegan_no", "sugar_yes",
           "sugar_no", "teenage", "young", "adult", "aged", "ancient", "answer_bar", "answer_club", "avto", "hiking",
-        "activ_yes", "activ_no", "art_yes", "art_no",  ])
+        "activ_yes", "activ_no", "art_yes", "art_no", "advanture", "calm"])
 async def resume_question(call: types.CallbackQuery):
-    print(call.data)
-    # Тебе нравится кино или театр?
 
-    if call.data == "history_yes" or call.data == "history_no":
-        #if call.data == "answer_cinema":
-         #   user_data.append("кино")
-        #else:
-         #   user_data.append("театр")
-        btn1 = InlineKeyboardButton(text="Да", callback_data="history_yes")
-        btn2 = InlineKeyboardButton(text="Нет", callback_data="history_no")
-        keyboard_inline = InlineKeyboardMarkup().add(btn1, btn2)
-        await call.message.answer("Тебе нравится история?", reply_markup=keyboard_inline)
 
     # Тебе нравится история?
 
     #elif call.data == "history_yes" or call.data == "history_no":
+    if call.data == "history_yes" or call.data == "history_no":
         if call.data == "history_yes":
-            user_data.append("Да")
-            user = UserList.get_user_by_id(call.from_user.id)
+            user = userList.get_user_by_id(call.from_user.id)
             user.add_historic(0.3)
             user.add_culture(0.2)
             user.add_religious(0.1)
             user.add_popularity(0.1)
             user.add_time(-0.1)
         else:
-            user_data.append("Нет")
-            user = UserList.get_user_by_id(call.from_user.id)
+            user = userList.get_user_by_id(call.from_user.id)
             user.add_historic(-0.1)
             user.add_culture(-0.2)
             user.add_religious(-0.1)
@@ -200,20 +231,17 @@ async def resume_question(call: types.CallbackQuery):
 
     if call.data == "teenage" or call.data == "young" or call.data == "adult":
         if call.data == "teenage":
-            user_data.append("teenage")
-            user = UserList.get_user_by_id(call.from_user.id)
+            user = userList.get_user_by_id(call.from_user.id)
             user.add_religious(-0.2)
             user.add_popularity(0.3)
             user.add_natural(0.1)
             user.add_time(0.3)
         elif call.data == "young":
-            user_data.append("young")
-            user = UserList.get_user_by_id(call.from_user.id)
+            user = userList.get_user_by_id(call.from_user.id)
             user.add_popularity(0.2)
             user.add_time(0.2)
         elif call.data == "adult":
-            user_data.append("adult")
-            user = UserList.get_user_by_id(call.from_user.id)
+            user = userList.get_user_by_id(call.from_user.id)
             user.add_religious(0.2)
             user.add_popularity(-0.1)
             user.add_natural(-0.1)
@@ -229,14 +257,12 @@ async def resume_question(call: types.CallbackQuery):
 
     elif call.data == "activ_yes" or call.data == "activ_no":
         if call.data == "activ_yes":
-            user_data.append("Да")
-            user = UserList.get_user_by_id(call.from_user.id)
+            user = userList.get_user_by_id(call.from_user.id)
             user.add_historic(0.1)
             user.add_natural(0.3)
             user.add_time(0.3)
         else:
-            user_data.append("Нет")
-            user = UserList.get_user_by_id(call.from_user.id)
+            user = userList.get_user_by_id(call.from_user.id)
             user.add_historic(-0.1)
             user.add_art(0.1)
             user.add_natural(-0.3)
@@ -249,8 +275,7 @@ async def resume_question(call: types.CallbackQuery):
 
     elif call.data == "art_yes" or call.data == "art_no":
         if call.data == "art_yes":
-            user_data.append("Да")
-            user = UserList.get_user_by_id(call.from_user.id)
+            user = userList.get_user_by_id(call.from_user.id)
             user.add_historic(0.1)
             user.add_culture(0.2)
             user.add_art(0.3)
@@ -258,8 +283,7 @@ async def resume_question(call: types.CallbackQuery):
             user.add_popularity(0.2)
             user.add_time(0.2)
         else:
-            user_data.append("Нет")
-            user = UserList.get_user_by_id(call.from_user.id)
+            user = userList.get_user_by_id(call.from_user.id)
             user.add_historic(-0.1)
             user.add_culture(-0.1)
             user.add_religious(0.1)
@@ -276,16 +300,14 @@ async def resume_question(call: types.CallbackQuery):
 
     elif call.data == "avto" or call.data == "hiking":
         if call.data == "avto":
-            user_data.append("На авто :)")
-            user = UserList.get_user_by_id(call.from_user.id)
+            user = userList.get_user_by_id(call.from_user.id)
             user.add_historic(-0.2)
             user.add_religious(-0.1)
             user.add_art(0.2)
             user.add_natural(-0.2)
             user.add_time(-0.2)
         else:
-            user_data.append("Пешком")
-            user = UserList.get_user_by_id(call.from_user.id)
+            user = userList.get_user_by_id(call.from_user.id)
             user.add_historic(0.2)
             user.add_religious(0.1)
             user.add_art(-0.1)
@@ -301,20 +323,30 @@ async def resume_question(call: types.CallbackQuery):
 
     elif call.data == "advanture" or call.data == "calm":
         if call.data == "advanture":
-            user_data.append("Авантюрный")
-            user_data.append("Авантюрный")
-            user = UserList.get_user_by_id(call.from_user.id)
+            user = userList.get_user_by_id(call.from_user.id)
             user.add_religious(-0.3)
             user.add_natural(-0.2)
             user.add_popularity(0.3)
             user.add_time(-0.2)
         else:
-            user_data.append("Спокойный")
-            user = UserList.get_user_by_id(call.from_user.id)
+            user = userList.get_user_by_id(call.from_user.id)
             user.add_religious(0.2)
             user.add_natural(0.2)
             user.add_time(0.3)
-        await call.message.answer("Спасибо, можете переходить к составлению маршрута")
-    print(user)
+        keyb = [
+            [
+                types.KeyboardButton(text="Маршрут"),
+                types.KeyboardButton(text="Анкета")
+            ],
+        ]
+        keyboard = types.ReplyKeyboardMarkup(
+            keyboard=keyb,
+            resize_keyboard=True,
+            input_field_placeholder="Выберите, что вы хотите"
+        )
+        await call.message.answer("Спасибо, можете переходить к составлению маршрута", reply_markup=keyboard)
+
+executor.start_polling(dp)
+
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)

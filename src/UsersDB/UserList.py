@@ -15,12 +15,15 @@ class UserList:
         :param cur: курсор БД
         :param user: Пользователь
         '''
+        place_arrival_alt, place_arrival_long = user.get_place_arrival()
+        place_departure_alt, place_departure_long = user.get_place_departure()
+
         cur.execute(f"""
                     INSERT INTO users VALUES
                     ('{user.get_user_id()}','{user.get_culture()}','{user.get_historic()}','{user.get_religious()}',
-                    '{user.get_art()}','{user.get_natural()}','{user.get_popularity()}','{user.get_time()}',
+                    '{user.get_art()}','{user.get_natural()}','{user.get_popularity()}','{user.get_time()}','{user.get_transport()}',
                     '{user.get_time_arrival()}','{user.get_time_departure()}',
-                    '{user.get_place_arrival()}','{user.get_place_departure()}')
+                    '{place_arrival_alt} {place_arrival_long} ','{place_departure_alt} {place_departure_long}')
                     """)
 
     def __create_user_table(self, cur):
@@ -37,6 +40,7 @@ class UserList:
                     is_natural varchar(255),
                     popularity varchar(255),
                     time varchar(255),
+                    transport varchar(255),
                     time_arrival varchar(255),
                     time_departure varchar(255),
                     place_arrival varchar(255),
@@ -98,10 +102,11 @@ class UserList:
                 new_user.set_natural(float(user[5]))
                 new_user.set_popularity(float(user[6]))
                 new_user.set_time(float(user[7]))
-                new_user.set_time_arrival(user[8])
-                new_user.set_time_departure(user[9])
-                new_user.set_place_arrival(user[10])
-                new_user.set_place_departure(user[11])
+                new_user.set_transport(int(user[8]))
+                new_user.set_time_arrival(user[9])
+                new_user.set_time_departure(user[10])
+                new_user.set_place_arrival(user[11].split())
+                new_user.set_place_departure(user[12].split())
                 self.__userList.append(new_user)
             con.close()
         except Exception as ex:
@@ -144,6 +149,36 @@ class UserList:
             if user.get_user_id() == user_id:
                 return user
         return None
+
+    def set_user_flag(self, user_id, flag_name, flag):
+        '''
+        Устанавливает значение флага пользователя\n
+        :param user_id: Int - ID пользователя в телеграм\n
+        :param flag_name: String - название флага\n
+        :param flag: Bool - флаг\n
+        \n
+        place_arrival_flag - флаг места прибытия\n
+        place_departure_flag - флаг места отбытия\n
+        time_arrival_flag - флаг времени прибытия\n
+        time_departure_flag - флаг времени отбытия\n
+        '''
+        for user_num in range(len(self.__userList)):
+            if self.__userList[user_num].get_user_id() == user_id:
+                self.__userList[user_num].set_flag(flag_name, flag)
+
+    def get_user_flag(self, user_id, flag_name):
+        '''
+        Возвращает значение флага пользователя\n
+        :param user_id: Int - ID пользователя в телеграм\n
+        :param flag_name: String - название флага\n
+        :return: Bool - флаг\n
+        \n
+        place_arrival_flag - флаг места прибытия\n
+        place_departure_flag - флаг места отбытия\n
+        time_arrival_flag - флаг времени прибытия\n
+        time_departure_flag - флаг времени отбытия\n
+        '''
+        return self.get_user_by_id(user_id).get_flag(flag_name)
 
     # Получить всех пользователей
     def get_all_users(self):
