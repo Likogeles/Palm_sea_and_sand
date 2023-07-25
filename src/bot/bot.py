@@ -7,7 +7,8 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from UsersDB.UserList import UserList
+from src.PlacesDB.PlaceList import PlaceList
+from src.UsersDB.UserList import UserList
 
 API_TOKEN = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 bot = Bot(API_TOKEN)
@@ -57,6 +58,7 @@ keyboard = types.ReplyKeyboardMarkup(
 # STARTING POINT
 
 userList = UserList()
+placeList = PlaceList()
 print(*userList.get_all_users())
 
 
