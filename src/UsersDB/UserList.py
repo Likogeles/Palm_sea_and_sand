@@ -1,5 +1,5 @@
 import sqlite3
-from UsersDB.User import User
+from src.UsersDB.User import User
 from options import users_db_name
 
 
