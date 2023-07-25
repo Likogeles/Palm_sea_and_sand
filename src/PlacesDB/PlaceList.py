@@ -7,12 +7,6 @@ from src.PlacesDB.Place import Place
 class PlaceList:
     __placeList = list()
 
-    def add_place(self, new_place):
-        self.__placeList.append(new_place)
-
-    def get_all_places(self):
-        return self.__placeList
-
     def __init__(self):
         self.load()
 
@@ -76,6 +70,12 @@ class PlaceList:
                            '{place.is_historic}', '{place.is_religious}', '{place.is_art}', '{place.is_natural}',
                            '{place.popularity}', '{place.time}')
                            """)
+
+    def add_place(self, new_place):
+        self.__placeList.append(new_place)
+
+    def get_all_places(self):
+        return self.__placeList
 
     def save(self):
         try:
