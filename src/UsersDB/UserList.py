@@ -1,5 +1,5 @@
 import sqlite3
-from src.UsersDB.User import User
+from UsersDB.User import User
 from options import users_db_name
 
 
@@ -149,6 +149,36 @@ class UserList:
             if user.get_user_id() == user_id:
                 return user
         return None
+
+    def set_user_flag(self, user_id, flag_name, flag):
+        '''
+        Устанавливает значение флага пользователя\n
+        :param user_id: Int - ID пользователя в телеграм\n
+        :param flag_name: String - название флага\n
+        :param flag: Bool - флаг\n
+        \n
+        place_arrival_flag - флаг места прибытия\n
+        place_departure_flag - флаг места отбытия\n
+        time_arrival_flag - флаг времени прибытия\n
+        time_departure_flag - флаг времени отбытия\n
+        '''
+        for user in self.__userList:
+            if user.get_user_id() == user_id:
+                user.set_flag(flag_name, flag)
+
+    def get_user_flag(self, user_id, flag_name):
+        '''
+        Возвращает значение флага пользователя\n
+        :param user_id: Int - ID пользователя в телеграм\n
+        :param flag_name: String - название флага\n
+        :return: Bool - флаг\n
+        \n
+        place_arrival_flag - флаг места прибытия\n
+        place_departure_flag - флаг места отбытия\n
+        time_arrival_flag - флаг времени прибытия\n
+        time_departure_flag - флаг времени отбытия\n
+        '''
+        return self.get_user_by_id(user_id).get_flag(flag_name)
 
     # Получить всех пользователей
     def get_all_users(self):

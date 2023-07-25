@@ -32,6 +32,12 @@ class User:
     # Место отъезда (широта и долгота)
     __place_departure_alt = None
     __place_departure_long = None
+    __flags = {
+        'place_arrival_flag': False,
+        'place_departure_flag': False,
+        'time_arrival_flag': False,
+        'time_departure_flag': False
+    }
 
     def __str__(self):
         return f"{self.__user_id}:\t{self.__is_culture}\t{self.__is_historic}\t" \
@@ -45,6 +51,40 @@ class User:
         :param user_id: Int - ID пользователя в телеграм
         '''
         self.__user_id = int(user_id)
+
+    def get_flag(self, flag_name):
+        '''
+        Возвращает значение флага пользователя по названию\n
+        :param flag_name: String - название флага\n
+        \n
+        place_arrival_flag - флаг места прибытия\n
+        place_departure_flag - флаг места отбытия\n
+        time_arrival_flag - флаг времени прибытия\n
+        time_departure_flag - флаг времени отбытия\n
+        \n
+        :return: Bool - Флаг пользователя
+        '''
+        try:
+            return self.__flags[flag_name]
+        except Exception as ex:
+            print(f"User: get_flag error: {ex}")
+        return None
+
+    def set_flag(self, flag_name, flag):
+        '''
+        Устанавливает значение флага пользователя по названию\n
+        :param flag_name: String - название флага\n
+        :param flag: Bool - флаг\n
+        \n
+        place_arrival_flag - флаг места прибытия\n
+        place_departure_flag - флаг места отбытия\n
+        time_arrival_flag - флаг времени прибытия\n
+        time_departure_flag - флаг времени отбытия\n
+        '''
+        try:
+            self.__flags[flag_name] = flag
+        except Exception as ex:
+            print(f"User: set_flag error: {ex}")
 
     def __update_user_in_db(self):
         try:
