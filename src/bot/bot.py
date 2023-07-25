@@ -1,5 +1,8 @@
 import logging
 import re
+import osmnx.geocoder as gc
+import processing.parser as pr
+import processing.model as md
 
 import json
 from UsersDB.User import User
@@ -15,8 +18,27 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from PlacesDB.PlaceList import PlaceList
 from UsersDB.UserList import UserList
 
-API_TOKEN = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+API_TOKEN = environ.get('API_TOKEN')
 bot = Bot(API_TOKEN)
+msg = "Нажмите *_Маршрут_*, чтобы сформировать маршрут\nНажмите *_Анкета_*, чтобы я мог понять ваши препочтения"
+
+main_keyboard = types.ReplyKeyboardMarkup(
+    keyboard= [
+        [
+            types.KeyboardButton(text="Маршрут"),
+            types.KeyboardButton(text="Анкета")
+        ],
+    ],
+    resize_keyboard=True,
+    input_field_placeholder="Выберите, что вы хотите"
+)
+
+time_keyboard = InlineKeyboardMarkup()
+time_keyboard.add(InlineKeyboardButton(text="В начале путешествия", callback_data="early"))
+time_keyboard.add(InlineKeyboardButton(text="В середине", callback_data="in_a_way"))
+time_keyboard.add(InlineKeyboardButton(text="В конце", callback_data="late"))
+time_keyboard.add(InlineKeyboardButton(text="Не имеет значения", callback_data="any_time"))
+time_keyboard.add(InlineKeyboardButton(text="Я не хочу посещать", callback_data="off"))
 
 # Configure logging
 
@@ -66,29 +88,22 @@ userList = UserList()
 placeList = PlaceList()
 print(*userList.get_all_users())
 
-@dp.message_handler(commands=['start', 'help'])
+@dp.message_handler(commands=['start', 'help', 'add_param'])
 async def send_welcome(message: types.Message):
+    if message.get_command() == '/add_param':
+        keyboard_inline = InlineKeyboardMarkup().add(InlineKeyboardButton(text="Да", callback_data="addit_yes"),
+                                                 InlineKeyboardButton(text="Нет", callback_data="addit_no"))
+        await message.answer("Чтобы подобрать маршрут персонально под вас, необходимо ответить еще на несколько простых вопросов", reply_markup=types.ReplyKeyboardRemove())
+        await message.answer("Начнем?", reply_markup=keyboard_inline)
+        return
     userList.add_user(message.from_user.id)
-    keyb = [
-        [
-            types.KeyboardButton(text="Маршрут"),
-            types.KeyboardButton(text="Анкета")
-        ],
-    ]
-    keyboard = types.ReplyKeyboardMarkup(
-        keyboard=keyb,
-        resize_keyboard=True,
-        input_field_placeholder="Выберите, что вы хотите"
-    )
-    await message.reply("Привет!\nЯ бот, который поможет проложить маршрут", reply_markup=keyboard)
+    await message.reply("Привет\!\nЯ бот, который поможет проложить маршрут\n\n" + msg, reply_markup=main_keyboard, parse_mode='MarkdownV2')
     await bot.send_sticker(message.from_user.id, sticker = "CAACAgIAAxkBAAEJwlpkun7HJX19BUAerEIc3G7jVD4RjgACrRgAAnmFiUi3haSlMSLa5S8E")
 
 @dp.message_handler(text=["Маршрут"])
 async def geolocation(message: types.Message):
     userList.set_user_flag(message.from_user.id, 'place_arrival_flag', True)
-    await message.answer("Введите адрес прибывания или отправьте геопозицию", reply_markup=types.ReplyKeyboardRemove())
-
-
+    await message.answer("Введите адрес прибытия или отправьте геопозицию", reply_markup=types.ReplyKeyboardRemove())
 
 @dp.message_handler(content_types=['location'])
 async def handle_loc(message):
@@ -98,7 +113,7 @@ async def handle_loc(message):
     if userList.get_user_flag(message.from_user.id, 'place_arrival_flag'):
         user.set_place_arrival((lat, lon))
         userList.set_user_flag(message.from_user.id, 'place_arrival_flag', False)
-
+    
         userList.set_user_flag(message.from_user.id, 'time_arrival_flag', True)
         await message.answer("Во сколько вы прибываете?", reply_markup=keyboard)
     if userList.get_user_flag(message.from_user.id, 'place_departure_flag'):
@@ -119,8 +134,11 @@ async def message_accept(message: types.Message):
         await message.answer("Тебе нравится история?", reply_markup=keyboard_inline)
     elif userList.get_user_flag(message.from_user.id, 'place_arrival_flag') or userList.get_user_flag(message.from_user.id, 'place_departure_flag'):
         # Место для кода получения координаты из адреса
-        lat = 38.939715
-        lon = 46.207076
+        try:
+            lat, lon = gc.geocode(message.text)
+        except ValueError:
+            await message.answer("Место не найдено:(\nПопробуйте ввести место иначе")
+            return
         user = userList.get_user_by_id(message.from_user.id)
         if userList.get_user_flag(message.from_user.id, 'place_arrival_flag'):
             user.set_place_arrival((lat, lon))
@@ -148,7 +166,17 @@ async def message_accept(message: types.Message):
             if userList.get_user_flag(message.from_user.id, 'time_departure_flag'):
                 user.set_time_departure(message.text)
                 userList.set_user_flag(message.from_user.id, 'time_departure_flag', False)
-                await message.answer("Отлично!", reply_markup=types.ReplyKeyboardRemove())
+
+                # РАССЧЕТ МОДЕЛИ             
+                await message.answer("Подождите, я рассчитываю маршрут...", reply_markup=types.ReplyKeyboardRemove())
+                data = pr.get_raw_data(pr.tags, ['Москва'])
+                normalized = pr.get_normilized(data)
+                knn = md.get_knn(user.get_vector(), normalized.values, 5)
+                await message.answer(str(knn))
+
+                # МЕСТО ДЛЯ ГЕНЕТИЧЕСКОГО АЛГОРИТМА
+
+                await message.answer(msg, reply_markup=main_keyboard, parse_mode='MarkdownV2')
         else:
             await message.answer("Время введено в неправильном формате")
     # print(userList.get_user_by_id(message.from_user.id))
@@ -333,20 +361,43 @@ async def resume_question(call: types.CallbackQuery):
             user.add_religious(0.2)
             user.add_natural(0.2)
             user.add_time(0.3)
-        keyb = [
-            [
-                types.KeyboardButton(text="Маршрут"),
-                types.KeyboardButton(text="Анкета")
-            ],
-        ]
-        keyboard = types.ReplyKeyboardMarkup(
-            keyboard=keyb,
-            resize_keyboard=True,
-            input_field_placeholder="Выберите, что вы хотите"
-        )
-        await call.message.answer("Спасибо, можете переходить к составлению маршрута", reply_markup=keyboard)
+        await call.message.answer("Спасибо, можете переходить к составлению маршрута", reply_markup=main_keyboard)
 
-executor.start_polling(dp)
+@dp.callback_query_handler(text=["addit_yes", "addit_no"])
+async def addit_opinion(call: types.CallbackQuery):
+    if call.data == "addit_yes":
+        await call.message.answer("В какой момент времени вы бы хотели посетить _объекты светской культуры_?", reply_markup=time_keyboard, parse_mode='MarkdownV2')
+    else:
+        await call.message.answer(msg, reply_markup=main_keyboard, parse_mode='MarkdownV2')
 
-if __name__ == '__main__':
+@dp.callback_query_handler(text=['early','in_a_way','late','any_time','off'])
+async def addit_opinion(call: types.CallbackQuery):
+    user = userList.get_user_by_id(call.from_user.id)
+    msg_obj = ""
+    match len(user.get_time_vector()):
+        case 0:
+            user.add_time_vector_value(call.data)
+            msg_obj += 'исторически важные объекты'
+        case 1:
+            user.add_time_vector_value(call.data)
+            msg_obj += 'религиозные объекты'
+        case 2:
+            user.add_time_vector_value(call.data)
+            msg_obj += 'выставки или галереи'
+        case 3:
+            user.add_time_vector_value(call.data)
+            msg_obj += 'парки'
+        case 4:
+            user.add_time_vector_value(call.data)
+            msg_obj += 'кафе или ресторан'
+        case 5:
+            user.add_time_vector_value(call.data)
+            await call.message.answer("Спасибо\! Ваш маршрут будет скорректирован\n\n" + msg, reply_markup=main_keyboard, parse_mode='MarkdownV2')
+            return
+            
+        case _:
+            msg_obj += 'ERROR'
+    await call.message.answer(f"В какой момент времени вы бы хотели посетить _{msg_obj}_?", reply_markup=time_keyboard, parse_mode='MarkdownV2')
+
+def start():
     executor.start_polling(dp, skip_updates=True)
