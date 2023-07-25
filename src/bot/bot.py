@@ -85,7 +85,7 @@ async def send_welcome(message: types.Message):
 
 @dp.message_handler(text=["Маршрут"])
 async def geolocation(message: types.Message):
-    userList.set_user_flag(message.from_user.id, 'place_arrival_flag', True)
+    userList.get_user_by_id(message.from_user.id).set_place_arrival_flag(True)
     await message.answer("Введите адрес прибывания или отправьте геопозицию", reply_markup=types.ReplyKeyboardRemove())
 
 
@@ -95,17 +95,17 @@ async def handle_loc(message):
     lat = message.location['latitude']
     lon = message.location['longitude']
     user = userList.get_user_by_id(message.from_user.id)
-    if userList.get_user_flag(message.from_user.id, 'place_arrival_flag'):
+    if userList.get_user_by_id(message.from_user.id).get_place_arrival_flag():
         user.set_place_arrival((lat, lon))
-        userList.set_user_flag(message.from_user.id, 'place_arrival_flag', False)
+        userList.get_user_by_id(message.from_user.id).set_place_arrival_flag(False)
 
-        userList.set_user_flag(message.from_user.id, 'time_arrival_flag', True)
+        userList.get_user_by_id(message.from_user.id).set_time_arrival_flag(True)
         await message.answer("Во сколько вы прибываете?", reply_markup=keyboard)
-    if userList.get_user_flag(message.from_user.id, 'place_departure_flag'):
+    elif userList.get_user_by_id(message.from_user.id).get_place_departure_flag():
         user.set_place_departure((lat, lon))
-        userList.set_user_flag(message.from_user.id, 'place_departure_flag', False)
+        userList.get_user_by_id(message.from_user.id).set_place_departure_flag(False)
 
-        userList.set_user_flag(message.from_user.id, 'time_departure_flag', True)
+        userList.get_user_by_id(message.from_user.id).set_time_departure_flag(True)
         await message.answer("Во сколько уезжаете?", reply_markup=keyboard)
 
 
@@ -117,37 +117,37 @@ async def message_accept(message: types.Message):
         keyboard_inline = InlineKeyboardMarkup().add(btn1, btn2)
         await message.answer("Хорошо, тогда начнем опрос", reply_markup=types.ReplyKeyboardRemove())
         await message.answer("Тебе нравится история?", reply_markup=keyboard_inline)
-    elif userList.get_user_flag(message.from_user.id, 'place_arrival_flag') or userList.get_user_flag(message.from_user.id, 'place_departure_flag'):
+    elif userList.get_user_by_id(message.from_user.id).get_place_arrival_flag() or userList.get_user_by_id(message.from_user.id).get_place_departure_flag():
         # Место для кода получения координаты из адреса
         lat = 38.939715
         lon = 46.207076
         user = userList.get_user_by_id(message.from_user.id)
-        if userList.get_user_flag(message.from_user.id, 'place_arrival_flag'):
+        if userList.get_user_by_id(message.from_user.id).get_place_arrival_flag():
             user.set_place_arrival((lat, lon))
 
-            userList.set_user_flag(message.from_user.id, 'time_arrival_flag', True)
+            userList.get_user_by_id(message.from_user.id).set_time_arrival_flag(True)
 
             await message.answer("Во сколько вы прибываете?", reply_markup=keyboard)
-        elif userList.get_user_flag(message.from_user.id, 'place_departure_flag'):
+        elif userList.get_user_by_id(message.from_user.id).get_place_departure_flag():
             user.set_place_departure((lat, lon))
 
-            userList.set_user_flag(message.from_user.id, 'time_departure_flag', True)
+            userList.get_user_by_id(message.from_user.id).set_time_departure_flag(True)
             await message.answer("Во сколько уезжаете?", reply_markup=keyboard)
-        userList.set_user_flag(message.from_user.id, 'place_arrival_flag', False)
-        userList.set_user_flag(message.from_user.id, 'place_departure_flag', False)
+        userList.get_user_by_id(message.from_user.id).set_place_arrival_flag(False)
+        userList.get_user_by_id(message.from_user.id).set_place_departure_flag(False)
 
-    elif userList.get_user_flag(message.from_user.id, 'time_arrival_flag') or userList.get_user_flag(message.from_user.id, 'time_departure_flag'):
+    elif userList.get_user_by_id(message.from_user.id).get_time_arrival_flag() or userList.get_user_by_id(message.from_user.id).get_time_departure_flag():
         result = re.fullmatch(r'\d{1,2}:\d\d', message.text)
         if result:
             user = userList.get_user_by_id(message.from_user.id)
-            if userList.get_user_flag(message.from_user.id, 'time_arrival_flag'):
+            if userList.get_user_by_id(message.from_user.id).get_time_arrival_flag():
                 user.set_time_arrival(message.text)
-                userList.set_user_flag(message.from_user.id, 'time_arrival_flag', False)
-                userList.set_user_flag(message.from_user.id, 'place_departure_flag', True)
+                userList.get_user_by_id(message.from_user.id).set_time_arrival_flag(False)
+                userList.get_user_by_id(message.from_user.id).set_place_departure_flag(True)
                 await message.answer("Введите адрес отбытия или отправьте геопозицию", reply_markup=types.ReplyKeyboardRemove())
-            if userList.get_user_flag(message.from_user.id, 'time_departure_flag'):
+            if userList.get_user_by_id(message.from_user.id).get_time_departure_flag():
                 user.set_time_departure(message.text)
-                userList.set_user_flag(message.from_user.id, 'time_departure_flag', False)
+                userList.get_user_by_id(message.from_user.id).set_time_departure_flag(False)
                 await message.answer("Отлично!", reply_markup=types.ReplyKeyboardRemove())
         else:
             await message.answer("Время введено в неправильном формате")
