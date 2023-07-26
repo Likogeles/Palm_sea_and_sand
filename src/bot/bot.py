@@ -176,6 +176,9 @@ async def message_accept(message: types.Message):
                 await message.answer("Подождите, я рассчитываю маршрут...", reply_markup=types.ReplyKeyboardRemove())
                 data = pr.get_raw_data(pr.tags, ['Москва'])
                 normalized = pr.get_normilized(data)
+                data_food = pr.get_raw_data(pr.tag_food, ['Москва'])
+                normalized_food = pr.get_normilized(data_food)
+
                 (knn_dist, knn_ids) = md.get_knn(user.get_vector(), normalized.values, 30)
 
                 MAX_GENERATION =10 #10
@@ -187,14 +190,16 @@ async def message_accept(message: types.Message):
                 tau_from=0
                 tau_in=0
                 place = "Moscow,Russia"
-                drive_type #"drive"/"walk"
-                start_point
-                stop_point
-                bgn_time
-                end_time
-                anceta_prmtr
-                anketa_bus
-                anketa_time
+                drive_type = 'drive' if user.get_transport() == 1 else 'walk'
+                (lat, lon) = user.get_place_arrival()
+                start_point = (lon, lat)
+                (lat, lon) = user.get_place_departure()
+                stop_point = (lon, lat)
+                bgn_time = int(user.get_time_arrival().split(":")[0]) * 3600
+                end_time = int(user.get_time_departure().split(":")[0]) * 3600
+                anceta_prmtr = user.get_vector()
+                anketa_bus =  user.get_transport()
+                anketa_time = user.get_time()
                 prmtr_functions
                 eat_pul
                 place_pul
@@ -215,49 +220,6 @@ async def message_accept(message: types.Message):
   
         else:
             await message.answer("Время введено в неправильном формате")
-    # print(userList.get_user_by_id(message.from_user.id))
-
-
-# Анкета
-"""
-
-
-@dp.message_handler(text=["Анкета"])
-async def start_form(message: types.Message):
-    btn_prior_1 = InlineKeyboardButton(text="Кино", callback_data="prior_cinema")
-    btn_prior_2 = InlineKeyboardButton(text="Театр", callback_data="prior_theatre")
-    btn_prior_3 = InlineKeyboardButton(text="Музей", callback_data="prior_museum")
-    btn_prior_4 = InlineKeyboardButton(text="Бар", callback_data="prior_bar")
-    btn_prior_5 = InlineKeyboardButton(text="Клуб", callback_data="prior_club")
-    keyboard_inline = InlineKeyboardMarkup()
-    keyboard_inline.add(btn_prior_1)
-    keyboard_inline.add(btn_prior_2)
-    keyboard_inline.add(btn_prior_3)
-    keyboard_inline.add(btn_prior_4)
-    keyboard_inline.add(btn_prior_5)
-    await message.answer("Выбери в порядке приоритета:", reply_markup=keyboard_inline)
-
-arr_answer = []
-
-@dp.callback_query_handler(text=["prior_cinema", "prior_theatre", "prior_museum", "prior_bar", "prior_club"])
-async def track_question(call: types.CallbackQuery):
-    if call.data == "prior_cinema" or call.data == "prior_theatre" or call.data == "prior_museum" or call.data == "prior_bar" or call.data == "prior_club":
-        if len(arr_answer) < 5:
-            arr_answer.append(call.data)
-            if len(arr_answer) == 5:
-                await call.message.answer("Итоговый приоритет: " + str(arr_answer))
-            else:
-                await call.message.answer("В порядке приоритета: " + str(arr_answer))
-
-@dp.message_handler(text=["Анкета"])
-async def start_form(message: types.Message):
-    btn1 = InlineKeyboardButton(text="Да", callback_data="history_yes")
-    btn2 = InlineKeyboardButton(text="Нет", callback_data="history_no")
-    keyboard_inline = InlineKeyboardMarkup().add(btn1, btn2)
-    await message.answer("Хорошо, тогда начнем опрос", reply_markup=types.ReplyKeyboardRemove())
-    await message.answer("Тебе нравится история?", reply_markup=keyboard_inline)
-"""
-
 
 @dp.callback_query_handler(
     text=["history_yes", "history_no", "vegan_yes", "vegan_no", "sugar_yes",
@@ -366,6 +328,7 @@ async def resume_question(call: types.CallbackQuery):
             user.add_art(0.2)
             user.add_natural(-0.2)
             user.add_time(0.1)
+            user.set_transport(1)
         else:
             user = userList.get_user_by_id(call.from_user.id)
             user.add_historic(0.1)
@@ -374,6 +337,7 @@ async def resume_question(call: types.CallbackQuery):
             user.add_natural(0.12)
             user.add_popularity(-0.15)
             user.add_time(-0.1)
+            user.set_transport(-1)
         btn1 = InlineKeyboardButton(text="Авантюрный", callback_data="advanture")
         btn2 = InlineKeyboardButton(text="Спокойный", callback_data="calm")
         keyboard_inline = InlineKeyboardMarkup().add(btn1, btn2)
