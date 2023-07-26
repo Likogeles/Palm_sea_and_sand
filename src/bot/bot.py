@@ -178,7 +178,7 @@ async def message_accept(message: types.Message):
                 normalized = pr.get_normilized(data)
                 data_food = pr.get_raw_data(pr.tag_food, ['Москва'])
                 normalized_food = pr.get_normilized(data_food)
-
+                
                 (knn_dist, knn_ids) = md.get_knn(user.get_vector(), normalized.values, 30)
 
                 MAX_GENERATION =10 #10
@@ -197,12 +197,19 @@ async def message_accept(message: types.Message):
                 stop_point = (lon, lat)
                 bgn_time = int(user.get_time_arrival().split(":")[0]) * 3600
                 end_time = int(user.get_time_departure().split(":")[0]) * 3600
-                anceta_prmtr = user.get_vector()
+                a = user.get_vector()
+                prmtr_functions = user.get_time_vector()
+                
+                anceta_prmtr = a[-2]+a[:-2]
+                if prmtr_functions[-1]!='off':
+                    anceta_prmtr.append(1)
+                else:
+                    anceta_prmtr.append(0)
                 anketa_bus =  user.get_transport()
                 anketa_time = user.get_time()
-                prmtr_functions
-                eat_pul
-                place_pul
+                
+                eat_pul = data_food.join(normalized_food)
+                place_pul = data.join(normalized)
                 
                 G,speed = get_map_graf(place,drive_type=drive_type)                
                 gen_pul = gen.get_pul(G,eat_pul,place_pul)
@@ -216,7 +223,13 @@ async def message_accept(message: types.Message):
                                 speed=speed,tau_to=tau_to,tau_from=tau_from,tau_in=tau_in,
                                 max_generation = MAX_GENERATION,p_cross=P_CROSS,p_mute=P_MUTE)
                 way_list2 = returt_way(way_list,gen_pul,k=3)
-                await message.answer(msg, reply_markup=main_keyboard, parse_mode='MarkdownV2')
+                answer = f'Маршруты:\n'
+                for i in range(len(way_list2)):
+                    answer+= f'Маршрут №{i}\n'
+                    for indx in way_list2[i]:
+                        answer+= f'{gen_pul[gen_pul["osmid"]==indx].name} {gen_pul[gen_pul["osmid"]==indx].time/60} мин.\n'
+                #await message.answer(answer, reply_markup=main_keyboard, parse_mode='MarkdownV2')
+                await message.answer(answer, reply_markup=main_keyboard, parse_mode='MarkdownV2')
   
         else:
             await message.answer("Время введено в неправильном формате")
