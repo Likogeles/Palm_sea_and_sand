@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
-
 import numpy as np
 import osmnx as ox
 import random
@@ -13,9 +10,6 @@ import networkx as nx
 import sys
 import matplotlib.pyplot as plt
 from more_itertools import locate
-
-
-# In[204]:
 
 
 def get_pul(G,eat_pul,place_pul):
@@ -43,9 +37,6 @@ def get_pul(G,eat_pul,place_pul):
     return pul
 
 
-# In[203]:
-
-
 def get_map_graf(place,drive_type="drive"):
     G = ox.graph_from_place(place, network_type=drive_type)
     G = ox.utils_graph.get_largest_component(G, strongly=True)
@@ -57,25 +48,8 @@ def get_map_graf(place,drive_type="drive"):
         speed = 1.39
     return G,speed
 
-
-# ## Функция проверки возможности добавления точки в маршрут
-# dt_route_to - Время следования из последней точки маршрута в новую точку
-# dt_route_from - Время следования из новой точки в конечную точку
-# dt_in - Время нахождения на точке
-# dt - Свободное время
-# tau_to,tau_from,tau_in - доп задержки для dt_route_to,dt_route_from,dt_in соответственно
-
-# In[93]:
-
-
 def wey_control(dt_route_to,dt_route_from,dt_in,dt,tau_to=0,tau_from=0,tau_in=0):
     return True if dt >= dt_route_to+dt_in+dt_route_from+tau_to+tau_from+tau_in else False
-
-
-# ## Класс объекта 'маршрут' и Функция расчета характеристик маршрута
-
-# In[165]:
-
 
 
 class WayPoints():
@@ -198,15 +172,6 @@ class WayPoints():
             sys.exit(0) 
 
 
-# ## Функция генерации маршрута
-
-# #### Генерация паттерна
-# x = 1-free_time/(t_end-t_bgn) if len(way)>1 else 0.05
-
-# In[146]:
-
-
-
 def early(x):
     a = 0.
     b = 0.05
@@ -252,12 +217,6 @@ def get_ver_group(pull,prmtr_names,prmtr_functions,free_time,t_bgn,t_end,way_len
         names.append(prmtr_names[indx])
     return max_acces,group.drop_duplicates(subset='osmid'),names
 
-
-# #### Проверка паттерна
-
-# In[50]:
-
-
 def check_pttern(point_type,prmtr_names,prmtr_functions,free_time,t_bgn,t_end,way_len):
     functions_dict = {'early':early,
                      'in_a_way':in_a_way,
@@ -280,10 +239,6 @@ def check_pttern(point_type,prmtr_names,prmtr_functions,free_time,t_bgn,t_end,wa
         
         return acces_arr[prmtr_names.index(point_type)]
 
-
-# #### Генерация
-
-# In[151]:
 
 
 def route_gen(G,pul,prmtr_functions,start_point,stop_point,bgn_time,end_time,
@@ -380,11 +335,6 @@ def route_gen(G,pul,prmtr_functions,start_point,stop_point,bgn_time,end_time,
     return way_list   
 
 
-# ## Fitnes function
-
-# In[58]:
-
-
 def Fitnes(*args,**kwargs):
     
     way = args[0]
@@ -396,12 +346,6 @@ def Fitnes(*args,**kwargs):
     way.fitnes = fitnes if fitnes > 0 else 0
 
 
-# ##  Функция Отбора (Селекция)
-# Турнирный алгоритм
-
-# In[59]:
-
-
 def select(chromosome_list ,k=2):
     
     new_chromosome_list = []
@@ -411,9 +355,6 @@ def select(chromosome_list ,k=2):
     return new_chromosome_list
 
 
-# ## Функция скрещивания
-
-# In[173]:
 
 
 def cross(way1,way2):
@@ -453,14 +394,6 @@ def cross(way1,way2):
     chaild1.new_way(part_points1,a1,b1,c1)
     chaild2.new_way(part_points2,a2,b2,c2)
     return chaild1,chaild2
-    
-    
-
-
-# ## Функция мутации
-# 
-
-# In[162]:
 
 
 def mute(way,G,point_pul,k=3,p_mute=0.1):
@@ -498,40 +431,6 @@ def mute(way,G,point_pul,k=3,p_mute=0.1):
             way.prmtrs_arr[i] = new_points[new_points['osmid']==way.route_osmids[i]][prmtr_names]
 
 
-# ## Генетический алгоритм
-
-# In[179]:
-
-
-MAX_GENERATION =10 #10
-POPULATION_SIZE = 6
-P_CROSS = 0.9
-P_MUTE = 0.2
-max_variant_per_point=10
-speed=11. # m/sec
-start_point = (37.597447,55.906487) #lon, lat
-stop_point = (37.747505,55.648280)
-bgn_time = 36000 # sec
-end_time = 64800
-tau_to=0
-tau_from=0
-tau_in=0
-#point_pul = dots[['lon','lat']].to_numpy()
-#pul_id = ox.distance.nearest_nodes(G, *point_pul.T, return_dist=False)
-#dots['pul_id'] = pul_id
-#point_pul = dots
-prmtr_functions = ['in_a_way','late','off','early','early','off']
-
-
-# In[166]:
-
-
-way_list = route_gen(G,point_pul,prmtr_functions,start_point,stop_point,bgn_time,end_time,
-              n=POPULATION_SIZE,speed=speed,tau_to=tau_to,tau_from=tau_from,tau_in=tau_in,
-              max_variant_per_point=max_variant_per_point)
-
-
-# In[205]:
 
 
 def run_genetic(G,point_pul,way_list,anceta_prmtr,anketa_bus,anketa_time,prmtr_functions,start_point,stop_point,bgn_time,end_time,
@@ -572,10 +471,6 @@ def run_genetic(G,point_pul,way_list,anceta_prmtr,anketa_bus,anketa_time,prmtr_f
         way_list2 = way_new
     return way_list2
 
-
-# In[209]:
-
-
 def returt_way(way_list,pul,k=3):
     way_top = []
     for way in way_list:
@@ -590,8 +485,6 @@ def returt_way(way_list,pul,k=3):
         ways.append(pwn)
     return ways
 
-
-# In[ ]:
 
 
 
