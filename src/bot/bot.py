@@ -7,6 +7,7 @@ import processing.model as md
 import json
 from UsersDB.User import User
 
+import genetic.Generator_clear as gen
 
 from os import environ
 
@@ -178,8 +179,39 @@ async def message_accept(message: types.Message):
                 knn = md.get_knn(user.get_vector(), normalized.values, 5)
                 await message.answer(str(knn))
 
-                # МЕСТО ДЛЯ ГЕНЕТИЧЕСКОГО АЛГОРИТМА
-
+                MAX_GENERATION =10 #10
+                POPULATION_SIZE = 6
+                P_CROSS = 0.9
+                P_MUTE = 0.2
+                max_variant_per_point=3
+                tau_to=0
+                tau_from=0
+                tau_in=0
+                place = "Moscow,Russia"
+                drive_type #"drive"/"walk"
+                start_point
+                stop_point
+                bgn_time
+                end_time
+                anceta_prmtr
+                anketa_bus
+                anketa_time
+                prmtr_functions
+                eat_pul
+                place_pul
+                
+                G,speed = get_map_graf(place,drive_type=drive_type)                
+                gen_pul = gen.get_pul(G,eat_pul,place_pul)
+                
+                
+                
+                way_list = route_gen(G,gen_pul,prmtr_functions,start_point,stop_point,bgn_time,end_time,
+                              n=POPULATION_SIZE,speed=speed,tau_to=tau_to,tau_from=tau_from,tau_in=tau_in,
+                              max_variant_per_point=max_variant_per_point)
+                way_list = run_genetic(G,gen_pul,way_list,anceta_prmtr,anketa_bus,anketa_time,prmtr_functions,start_point,stop_point,bgn_time,end_time,
+                                speed=speed,tau_to=tau_to,tau_from=tau_from,tau_in=tau_in,
+                                max_generation = MAX_GENERATION,p_cross=P_CROSS,p_mute=P_MUTE)
+                way_list2 = returt_way(way_list,gen_pul,k=3)
                 await message.answer(msg, reply_markup=main_keyboard, parse_mode='MarkdownV2')
   
         else:
