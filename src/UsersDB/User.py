@@ -55,6 +55,20 @@ class User:
         '''
         self.__user_id = int(user_id)
 
+    def set_default(self):
+        '''
+        Устанавливает исходное значение 0.5 всем весам пользователя (и -1 для транспорта)
+        '''
+        self.__is_culture = 0.5
+        self.__is_historic = 0.5
+        self.__is_religious = 0.5
+        self.__is_art = 0.5
+        self.__is_natural = 0.5
+        self.__popularity = 0.5
+        self.__time = 0.5
+        self.__is_transport = -1
+        self.__update_user_in_db()
+
     def get_place_arrival_flag(self):
         '''
         Возвращает флаг места прибытия\n

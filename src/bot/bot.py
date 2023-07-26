@@ -112,6 +112,7 @@ async def handle_loc(message):
 @dp.message_handler()
 async def message_accept(message: types.Message):
     if message.text == "Анкета":
+        userList.get_user_by_id(message.from_user.id).set_default()
         btn1 = InlineKeyboardButton(text="Да", callback_data="history_yes")
         btn2 = InlineKeyboardButton(text="Нет", callback_data="history_no")
         keyboard_inline = InlineKeyboardMarkup().add(btn1, btn2)
