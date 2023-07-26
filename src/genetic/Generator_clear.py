@@ -18,7 +18,7 @@ from more_itertools import locate
 # In[204]:
 
 
-def get_pul(eat_pul,place_pul):
+def get_pul(G,eat_pul,place_pul):
     dots = place_pul.copy()
     dots['eat'] = np.zeros(dots.shape[0])
     dots['time'] = dots['time'].apply(lambda x: abs(x)*13800+600)
@@ -372,7 +372,7 @@ def route_gen(G,pul,prmtr_functions,start_point,stop_point,bgn_time,end_time,
                     else:
                         print('не нашел')
                         try_counter+=1
-            except valEr:
+            except Exception:
                 try_counter+=1
         way_list.append(WayPoints(routes_points,route_osmids,prmtrs,prmtrs_arr,points_type_arr,
                                   routes_points_times,free_times,
@@ -503,32 +503,32 @@ def mute(way,G,point_pul,k=3,p_mute=0.1):
 # In[179]:
 
 
-MAX_GENERATION =10 #10
-POPULATION_SIZE = 6
-P_CROSS = 0.9
-P_MUTE = 0.2
-max_variant_per_point=10
-speed=11. # m/sec
-start_point = (37.597447,55.906487) #lon, lat
-stop_point = (37.747505,55.648280)
-bgn_time = 36000 # sec
-end_time = 64800
-tau_to=0
-tau_from=0
-tau_in=0
+# MAX_GENERATION =10 #10
+# POPULATION_SIZE = 6
+# P_CROSS = 0.9
+# P_MUTE = 0.2
+# max_variant_per_point=10
+# speed=11. # m/sec
+# start_point = (37.597447,55.906487) #lon, lat
+# stop_point = (37.747505,55.648280)
+# bgn_time = 36000 # sec
+# end_time = 64800
+# tau_to=0
+# tau_from=0
+# tau_in=0
 #point_pul = dots[['lon','lat']].to_numpy()
 #pul_id = ox.distance.nearest_nodes(G, *point_pul.T, return_dist=False)
 #dots['pul_id'] = pul_id
 #point_pul = dots
-prmtr_functions = ['in_a_way','late','off','early','early','off']
+#prmtr_functions = ['in_a_way','late','off','early','early','off']
 
 
 # In[166]:
 
 
-way_list = route_gen(G,point_pul,prmtr_functions,start_point,stop_point,bgn_time,end_time,
-              n=POPULATION_SIZE,speed=speed,tau_to=tau_to,tau_from=tau_from,tau_in=tau_in,
-              max_variant_per_point=max_variant_per_point)
+# way_list = route_gen(G,point_pul,prmtr_functions,start_point,stop_point,bgn_time,end_time,
+#               n=POPULATION_SIZE,speed=speed,tau_to=tau_to,tau_from=tau_from,tau_in=tau_in,
+#               max_variant_per_point=max_variant_per_point)
 
 
 # In[205]:
@@ -576,7 +576,7 @@ def run_genetic(G,point_pul,way_list,anceta_prmtr,anketa_bus,anketa_time,prmtr_f
 # In[207]:
 
 
-def returt_way(way_list,k=3):
+def returt_way(way_list,pul,k=3):
     way_top = []
     for way in way_list:
         way_top.append([way.fitnes,way.route_osmids[1:-1]])
@@ -584,8 +584,8 @@ def returt_way(way_list,k=3):
     ways = []
     for i in range(k):
         pwn = []
-        for i,id in enumerate(way_list2[3].route_osmids[1:-1],start=1):
-            pwn.append([dots[dots["osmid"]==id]['name'].values[0],way_list2[3].points_type_arr[i]])
+        for i,ids in enumerate(way_top[i].route_osmids[1:-1],start=1):
+            #pwn.append([pul[pul["osmid"]==ids]['name'].values[0],way_top[i].points_type_arr[i]])
+            pwn.append(ids)
         ways.append(pwn)
     return ways
-
