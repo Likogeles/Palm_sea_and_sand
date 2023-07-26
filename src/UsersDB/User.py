@@ -40,6 +40,8 @@ class User:
     __time_arrival_flag = False
     # Флаг времени отбытия
     __time_departure_flag = False
+    # Вектор предпочтения
+    __time_vector = []
 
     def __str__(self):
         return f"{self.__user_id}: {self.__is_culture} {self.__is_historic} " \
@@ -409,3 +411,13 @@ class User:
         :return: (Float, Float) - значение места отъезда
         '''
         return self.__place_departure_alt, self.__place_departure_long
+    
+    def get_vector(self):
+        return [self.__is_culture, self.__is_historic, self.__is_religious,
+                self.__is_art, self.__is_natural, self.__popularity, self.__time]
+    
+    def get_time_vector(self):
+        return self.__time_vector
+    
+    def add_time_vector_value(self, ans):
+        self.__time_vector.append(str(ans))
