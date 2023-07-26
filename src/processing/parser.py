@@ -28,7 +28,7 @@ filter_tags = ['osmid', 'type', 'object', 'name', 'lat', 'lon', 'geometry', 'cit
                'description', 'contact:vk', 'service_times',
                'contact:facebook', 'contact:instagram', 'contact:twitter', 'contact:youtube', 'email'
               ]
-filter_tags_food = ['osmid', 'type', 'object', 'name', 'geometry', 'city',
+filter_tags_food = ['osmid', 'type', 'object', 'name',  'lat', 'lon', 'geometry', 'city',
                'addr:street', 'addr:housenumber','start_date', 
                'opening_hours', 'phone', 'contact:website', 
                'building:levels', 'wikipedia', 'contact:phone', 'contact:email', 'website', 'description', 'contact:vk',
@@ -62,21 +62,21 @@ def get_raw_data(tags, cities):
 
 def get_normilized(gdfs):
     new = gdfs[['osmid', 'name', 'type']].copy()
-    new['is_culture'] = (gdfs['type'] != 'beach') & (gdfs['type'] != 'viewpoint')
+    new['is_culture'] = ((gdfs['type'] != 'beach') & (gdfs['type'] != 'viewpoint')).replace({True: float(1), False: float(0)}) * 0.7
     new['is_culture'] = new['is_culture'].replace({True: float(1), False: float(0)})
     new['is_historic'] = (gdfs['type'] == 'museum') | (gdfs['type'] == 'monument') | (gdfs['type'] == 'memorial')
     new['is_historic'] = new['is_historic'].replace({True: float(1), False: float(0)})
     new['is_religious'] = (gdfs['type'] == 'church') | (gdfs['type'] == 'place_of_worship')
     new['is_religious'] = new['is_religious'].replace({True: float(0.7), False: float(0)})
-    new['is_art'] = (gdfs['type'] == 'museum') | (gdfs['type'] == 'gallery')
+    new['is_art'] = ((gdfs['type'] == 'museum') | (gdfs['type'] == 'gallery')).replace({True: float(1), False: float(0)}) * 0.7
     new['is_art'] = new['is_art'].replace({True: float(1), False: float(0)})
     new['is_natural'] = (gdfs['type'] == 'beach') | (gdfs['type'] == 'viewpoint') | (gdfs['type'] == 'monument')
     new['is_natural'] = new['is_art'].replace({True: float(1), False: float(0)})
-    new['popularity'] = (gdfs['opening_hours'].notna()).replace({True: float(1), False: float(0)}) +\
-    (gdfs['phone'].notna() | gdfs['contact:phone'].notna()).replace({True: float(1), False: float(0)}) +\
-    (gdfs['contact:website'].notna() | gdfs['website'].notna()).replace({True: float(1), False: float(0)}).apply(lambda x: x * 2) +\
-    (gdfs['wikipedia'].notna()).replace({True: float(1), False: float(0)}).apply(lambda x: x * 3) +\
-    (gdfs['contact:email'].notna() | gdfs['email'].notna()).replace({True: float(1), False: float(0)})
+    new['popularity'] = (gdfs['opening_hours'].notna()).replace({True: float(0.1), False: float(0)}) +\
+    (gdfs['phone'].notna() | gdfs['contact:phone'].notna()).replace({True: float(0.1), False: float(0)}) +\
+    (gdfs['contact:website'].notna() | gdfs['website'].notna()).replace({True: float(0.1), False: float(0)}).apply(lambda x: x * 2) +\
+    (gdfs['wikipedia'].notna()).replace({True: float(0.1), False: float(0)}).apply(lambda x: x * 3) +\
+    (gdfs['contact:email'].notna() | gdfs['email'].notna()).replace({True: float(0.1), False: float(0)})
 
     new['time'] = get_time(new['type'])
     new = new.reset_index(drop = True)
@@ -94,10 +94,16 @@ def get_time(obj):
                 result -= 0.15
             case ('church' | 'place_of_worship'):
                 result -= 0.3
+            case 'fast_food':
+                result -= 0.35
+            case 'cafe':
+                result -= 0.2
+            case 'restaurant':
+                result -= 0.1
             case _:
                 result -= 0.4
         times.append(result)
     return pd.Series(times)
 
 def add_noise(row):
-    return row.apply(lambda x: x + np.random.uniform(-0.25, 0.25))
+    return row.apply(lambda x: x + np.random.uniform(-0.05, 0.05))

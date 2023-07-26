@@ -1,7 +1,7 @@
 import sqlite3
 
 from options import places_db_name
-from src.PlacesDB.Place import Place
+from PlacesDB.Place import Place
 
 
 class PlaceList:
