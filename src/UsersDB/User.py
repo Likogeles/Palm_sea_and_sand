@@ -32,23 +32,23 @@ class User:
     # Место отъезда (широта и долгота)
     __place_departure_alt = None
     __place_departure_long = None
-    __flags = {
-        'place_arrival_flag': False,
-        'place_departure_flag': False,
-        'time_arrival_flag': False,
-        'time_departure_flag': False
-    }
+    # Флаг места прибытия
+    __place_arrival_flag = False
+    # Флаг места отбытия
+    __place_departure_flag = False
+    # Флаг времени прибытия
+    __time_arrival_flag = False
+    # Флаг времени отбытия
+    __time_departure_flag = False
+    # Вектор предпочтения
     __time_vector = []
 
     def __str__(self):
-
-        flags_str = str(self.__flags)
-
         return f"{self.__user_id}: {self.__is_culture} {self.__is_historic} " \
                f"{self.__is_religious} {self.__is_art} {self.__is_natural} " \
                f"{self.__popularity} {self.__time} {self.__is_transport} {self.__time_arrival} {self.__time_departure} " \
                f"{self.__place_arrival_alt} {self.__place_arrival_long} {self.__place_departure_alt} {self.__place_departure_long}" \
-               f"\n{flags_str}\n"
+               f"\n{self.__place_arrival_flag} {self.__place_departure_flag} {self.__time_arrival_flag} {self.__time_departure_flag}\n"
 
     def __init__(self, user_id):
         '''
@@ -57,41 +57,79 @@ class User:
         '''
         self.__user_id = int(user_id)
 
-    def get_flag(self, flag_name):
-        # print(f"{self.__user_id}: Получение флага {flag_name} ({str(self.__flags[flag_name])})")
+    def set_default(self):
         '''
-        Возвращает значение флага пользователя по названию\n
-        :param flag_name: String - название флага\n
-        \n
-        place_arrival_flag - флаг места прибытия\n
-        place_departure_flag - флаг места отбытия\n
-        time_arrival_flag - флаг времени прибытия\n
-        time_departure_flag - флаг времени отбытия\n
-        \n
-        :return: Bool - Флаг пользователя
+        Устанавливает исходное значение 0.5 всем весам пользователя (и -1 для транспорта)
         '''
-        try:
-            return self.__flags[flag_name]
-        except Exception as ex:
-            print(f"User: get_flag error: {ex}")
-        return None
+        self.__is_culture = 0.5
+        self.__is_historic = 0.5
+        self.__is_religious = 0.5
+        self.__is_art = 0.5
+        self.__is_natural = 0.5
+        self.__popularity = 0.5
+        self.__time = 0.5
+        self.__is_transport = -1
+        self.__update_user_in_db()
 
-    def set_flag(self, flag_name, flag):
-        # print(f"{self.__user_id}: Установка флага {flag_name} на {str(flag)}")
+    def get_place_arrival_flag(self):
         '''
-        Устанавливает значение флага пользователя по названию\n
-        :param flag_name: String - название флага\n
-        :param flag: Bool - флаг\n
-        \n
-        place_arrival_flag - флаг места прибытия\n
-        place_departure_flag - флаг места отбытия\n
-        time_arrival_flag - флаг времени прибытия\n
-        time_departure_flag - флаг времени отбытия\n
+        Возвращает флаг места прибытия\n
+        :return: Bool - флаг места прибытия
         '''
-        try:
-            self.__flags[flag_name] = flag
-        except Exception as ex:
-            print(f"User: set_flag error: {ex}")
+        return self.__place_arrival_flag
+
+    def set_place_arrival_flag(self, flag):
+        '''
+        Устанавливает флаг места прибытия\n
+        :param flag: Bool - флаг места прибытия
+        '''
+        self.__place_arrival_flag = flag
+        self.__update_user_in_db()
+
+    def get_place_departure_flag(self):
+        '''
+        Возвращает флаг места отъезда\n
+        :return: Bool - флаг места отъезда
+        '''
+        return self.__place_departure_flag
+
+    def set_place_departure_flag(self, flag):
+        '''
+        Устанавливает флаг места отъезда\n
+        :param flag: Bool - флаг места отъезда
+        '''
+        self.__place_departure_flag = flag
+        self.__update_user_in_db()
+
+    def get_time_arrival_flag(self):
+        '''
+        Возвращает флаг времени прибытия\n
+        :return: Bool - флаг времени прибытия
+        '''
+        return self.__time_arrival_flag
+
+    def set_time_arrival_flag(self, flag):
+        '''
+        Устанавливает флаг времени прибытия\n
+        :param flag: Bool - флаг времени прибытия
+        '''
+        self.__time_arrival_flag = flag
+        self.__update_user_in_db()
+
+    def get_time_departure_flag(self):
+        '''
+        Возвращает флаг времени отъезда\n
+        :return: Bool - флаг времени отъезда
+        '''
+        return self.__time_departure_flag
+
+    def set_time_departure_flag(self, flag):
+        '''
+        Устанавливает флаг времени отъезда\n
+        :param flag: Bool - флаг времени отъезда
+        '''
+        self.__time_departure_flag = flag
+        self.__update_user_in_db()
 
     def __update_user_in_db(self):
         try:
@@ -100,12 +138,14 @@ class User:
             cur.execute(f"""
                     UPDATE users
                     SET is_culture = '{str(self.__is_culture)}', is_historic = '{str(self.__is_historic)}',
-                    is_religious = '{str(self.__is_religious)}', is_art = '{str(self.__is_art)}', is_natural =
-                    '{str(self.__is_natural)}', popularity = '{str(self.__popularity)}', time = '{str(self.__time)}'
-                    , transport = '{str(self.__is_transport)}'
-                    , time_arrival = '{str(self.__time_arrival)}', time_departure = '{str(self.__time_departure)}',
+                    is_religious = '{str(self.__is_religious)}', is_art = '{str(self.__is_art)}',
+                    is_natural = '{str(self.__is_natural)}', popularity = '{str(self.__popularity)}',
+                    time = '{str(self.__time)}', transport = '{str(self.__is_transport)}',
+                    time_arrival = '{str(self.__time_arrival)}', time_departure = '{str(self.__time_departure)}',
                     place_arrival = '{str(self.__place_arrival_alt)} {str(self.__place_arrival_long)}',
-                    place_departure = '{str(self.__place_departure_alt)} {str(self.__place_departure_long)}'
+                    place_departure = '{str(self.__place_departure_alt)} {str(self.__place_departure_long)}',
+                    place_arrival_flag = '{str(self.__place_arrival_flag)}', place_departure_flag = '{str(self.__place_departure_flag)}',
+                    time_arrival_flag = '{str(self.__time_arrival_flag)}', time_departure_flag = '{str(self.__time_departure_flag)}'
                     WHERE user_id = {str(self.__user_id)};
                     """)
             con.commit()

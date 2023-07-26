@@ -71,10 +71,107 @@ class PlaceList:
                            '{place.popularity}', '{place.time}')
                            """)
 
+    def get_place_by_type(self, place_type) -> list[Place]:
+        '''
+        Возвращает список мест определённого типа\n
+        :param place_type: тип места
+
+        На данный момент доступны:\n
+        place_of_worship\n
+        museum\n
+        memorial\n
+        gallery\n
+        viewpoint\n
+        monument\n
+        church\n
+        beach\n
+        theatre\n
+        yes\n
+        attraction
+        '''
+        return list(filter(lambda x: x.type_ == place_type, self.__placeList))
+
+    # def get_theatre_places(self):
+    #     '''
+    #     Возвращает список объектов типа 'theatre'\n
+    #     :return: List(Place)
+    #     '''
+    #     return list(filter(lambda x: x.type_ == 'theatre', self.__placeList))
+    #
+    # def get_place_of_worship_places(self):
+    #     '''
+    #     Возвращает список объектов типа 'place_of_worship'\n
+    #     :return: List(Place)
+    #     '''
+    #     return list(filter(lambda x: x.type_ == 'place_of_worship', self.__placeList))
+    #
+    # def get_beach_places(self):
+    #     '''
+    #     Возвращает список объектов типа 'beach'\n
+    #     :return: List(Place)
+    #     '''
+    #     return list(filter(lambda x: x.type_ == 'beach', self.__placeList))
+    #
+    # def get_yes_places(self):
+    #     '''
+    #     Возвращает список объектов типа 'yes'\n
+    #     :return: List(Place)
+    #     '''
+    #     return list(filter(lambda x: x.type_ == 'yes', self.__placeList))
+    #
+    # def get_attraction_places(self):
+    #     '''
+    #     Возвращает список объектов типа 'attraction'\n
+    #     :return: List(Place)
+    #     '''
+    #     return list(filter(lambda x: x.type_ == 'attraction', self.__placeList))
+    #
+    # def get_memorial_places(self):
+    #     '''
+    #     Возвращает список объектов типа 'memorial'\n
+    #     :return: List(Place)
+    #     '''
+    #     return list(filter(lambda x: x.type_ == 'memorial', self.__placeList))
+    #
+    # def get_monument_places(self):
+    #     '''
+    #     Возвращает список объектов типа 'monument'\n
+    #     :return: List(Place)
+    #     '''
+    #     return list(filter(lambda x: x.type_ == 'monument', self.__placeList))
+    #
+    # def get_viewpoint_places(self):
+    #     '''
+    #     Возвращает список объектов типа 'viewpoint'\n
+    #     :return: List(Place)
+    #     '''
+    #     return list(filter(lambda x: x.type_ == 'viewpoint', self.__placeList))
+    #
+    # def get_gallery_places(self):
+    #     '''
+    #     Возвращает список объектов типа 'gallery'\n
+    #     :return: List(Place)
+    #     '''
+    #     return list(filter(lambda x: x.type_ == 'gallery', self.__placeList))
+    #
+    # def get_museum_places(self):
+    #     '''
+    #     Возвращает список объектов типа 'museum'\n
+    #     :return: List(Place)
+    #     '''
+    #     return list(filter(lambda x: x.type_ == 'museum', self.__placeList))
+    #
+    # def get_church_places(self):
+    #     '''
+    #     Возвращает список объектов типа 'church'\n
+    #     :return: List(Place)
+    #     '''
+    #     return list(filter(lambda x: x.type_ == 'church', self.__placeList))
+
     def add_place(self, new_place):
         self.__placeList.append(new_place)
 
-    def get_all_places(self):
+    def get_all_places(self) -> list[Place]:
         return self.__placeList
 
     def save(self):

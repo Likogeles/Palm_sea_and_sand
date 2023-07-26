@@ -15,63 +15,47 @@ import matplotlib.pyplot as plt
 from more_itertools import locate
 
 
-# In[130]:
+# In[204]:
 
 
-dots = pd.read_csv("moscow.csv")
-dots['eat'] = np.zeros(dots.shape[0])
-dots['time'] = dots['time'].apply(lambda x: abs(x)*13800+600)
-dots.columns
-
-
-# In[131]:
-
-
-dots = dots[['osmid', 'type', 'object', 'name', 'lat', 'lon', 'is_culture',
+def get_pul(G,eat_pul,place_pul):
+    dots = place_pul.copy()
+    dots['eat'] = np.zeros(dots.shape[0])
+    dots['time'] = dots['time'].apply(lambda x: abs(x)*13800+600)
+    dots = dots[['osmid', 'type', 'object', 'name', 'lat', 'lon', 'is_culture',
        'is_historic', 'is_religious', 'is_art', 'is_natural', 'popularity',
        'time', 'eat']]
-
-
-# In[132]:
-
-
-eat = pd.read_csv("food.csv")
-eat['is_culture'] = np.ones(eat.shape[0])*0.5
-eat['is_historic'] = np.ones(eat.shape[0])*0.5
-eat['is_religious'] = np.ones(eat.shape[0])*0.5
-eat['is_art'] = np.ones(eat.shape[0])*0.5
-eat['is_natural'] = np.ones(eat.shape[0])*0.5
-eat['eat'] = np.ones(eat.shape[0])
-eat['time'] = eat['time'].apply(lambda x: abs(x)*13800+600)
-eat.columns
-
-
-# In[133]:
-
-
-eat = eat[['osmid', 'type', 'object', 'name', 'lat', 'lon', 'is_culture',
+    
+    eat = eat_pul.copy()
+    eat['is_culture'] = np.ones(eat.shape[0])*0.5
+    eat['is_historic'] = np.ones(eat.shape[0])*0.5
+    eat['is_religious'] = np.ones(eat.shape[0])*0.5
+    eat['is_art'] = np.ones(eat.shape[0])*0.5
+    eat['is_natural'] = np.ones(eat.shape[0])*0.5
+    eat['eat'] = np.ones(eat.shape[0])
+    eat['time'] = eat['time'].apply(lambda x: abs(x)*13800+600)
+    eat = eat[['osmid', 'type', 'object', 'name', 'lat', 'lon', 'is_culture',
        'is_historic', 'is_religious', 'is_art', 'is_natural', 'popularity',
        'time', 'eat']]
+    pul = pd.concat([dots,eat])
+    pul_id = ox.distance.nearest_nodes(G, *pul[['lon','lat']].to_numpy().T, return_dist=False)
+    pul['pul_id'] = pul_id
+    return pul
 
 
-# In[136]:
+# In[203]:
 
 
-dots = pd.concat([dots,eat])
-
-
-# In[75]:
-
-
-place = "Moscow,Russia"
-G = ox.graph_from_place(place, network_type="drive")
-G = ox.utils_graph.get_largest_component(G, strongly=True)
-
-
-# In[458]:
-
-
-G = ox.add_edge_speeds(G)
+def get_map_graf(place,drive_type="drive"):
+    G = ox.graph_from_place(place, network_type=drive_type)
+    G = ox.utils_graph.get_largest_component(G, strongly=True)
+    G = ox.add_edge_speeds(G)
+    speed = 11.
+    if drive_type == "drive":
+        speed = 11.
+    if  drive_type == "walk":
+        speed = 1.39
+    return G,speed
 
 
 # ## Функция проверки возможности добавления точки в маршрут
@@ -222,8 +206,7 @@ class WayPoints():
 # In[146]:
 
 
-prmtr_names = ['is_culture','is_historic','is_religious','is_art','is_natural','eat']
-prmtr_functions = ['in_a_way','late','off','early','early','off']
+
 def early(x):
     a = 0.
     b = 0.05
@@ -297,31 +280,6 @@ def check_pttern(point_type,prmtr_names,prmtr_functions,free_time,t_bgn,t_end,wa
         
         return acces_arr[prmtr_names.index(point_type)]
 
-
-# In[627]:
-
-
-x = np.linspace(0,1,200)
-y1=[]
-y2=[]
-y3=[]
-y4=[]
-for p in x:
-    y1.append(early(p))
-    y2.append(in_a_way(p))
-    y3.append(late(p))
-    y4.append(any_time(p))
-plt.plot(x,y1,label='early')
-plt.plot(x,y2,label='in_a_way')
-plt.plot(x,y3,label='late')
-plt.plot(x,y4,label='any_time')
-
-
-# #### Анкета пользователя
-# is_culture,is_historic,is_religious,is_art,is_natural,popularity,time(связь с протяженностью маршрута, чем больше,тем дленнее маршрут может быть),transport(-1-пешком,1-авто)
-# 
-# #### Пизнаки объекта
-# is_culture,is_historic,is_religious,is_art,is_natural,popularity,time(время нахождения в точке)
 
 # #### Генерация
 
@@ -414,7 +372,7 @@ def route_gen(G,pul,prmtr_functions,start_point,stop_point,bgn_time,end_time,
                     else:
                         print('не нашел')
                         try_counter+=1
-            except valEr:
+            except Exception:
                 try_counter+=1
         way_list.append(WayPoints(routes_points,route_osmids,prmtrs,prmtrs_arr,points_type_arr,
                                   routes_points_times,free_times,
@@ -545,94 +503,89 @@ def mute(way,G,point_pul,k=3,p_mute=0.1):
 # In[179]:
 
 
-MAX_GENERATION =10 #10
-POPULATION_SIZE = 6
-P_CROSS = 0.9
-P_MUTE = 0.2
-max_variant_per_point=10
-speed=11. # m/sec
-start_point = (37.597447,55.906487) #lon, lat
-stop_point = (37.747505,55.648280)
-bgn_time = 36000 # sec
-end_time = 64800
-tau_to=0
-tau_from=0
-tau_in=0
-point_pul = dots[['lon','lat']].to_numpy()
-pul_id = ox.distance.nearest_nodes(G, *point_pul.T, return_dist=False)
-dots['pul_id'] = pul_id
-point_pul = dots
-prmtr_functions = ['in_a_way','late','off','early','early','off']
+# MAX_GENERATION =10 #10
+# POPULATION_SIZE = 6
+# P_CROSS = 0.9
+# P_MUTE = 0.2
+# max_variant_per_point=10
+# speed=11. # m/sec
+# start_point = (37.597447,55.906487) #lon, lat
+# stop_point = (37.747505,55.648280)
+# bgn_time = 36000 # sec
+# end_time = 64800
+# tau_to=0
+# tau_from=0
+# tau_in=0
+#point_pul = dots[['lon','lat']].to_numpy()
+#pul_id = ox.distance.nearest_nodes(G, *point_pul.T, return_dist=False)
+#dots['pul_id'] = pul_id
+#point_pul = dots
+#prmtr_functions = ['in_a_way','late','off','early','early','off']
 
 
 # In[166]:
 
 
-get_ipython().run_cell_magic('time', '', 'way_list = route_gen(G,point_pul,prmtr_functions,start_point,stop_point,bgn_time,end_time,\n              n=POPULATION_SIZE,speed=speed,tau_to=tau_to,tau_from=tau_from,tau_in=tau_in,\n              max_variant_per_point=max_variant_per_point)')
+# way_list = route_gen(G,point_pul,prmtr_functions,start_point,stop_point,bgn_time,end_time,
+#               n=POPULATION_SIZE,speed=speed,tau_to=tau_to,tau_from=tau_from,tau_in=tau_in,
+#               max_variant_per_point=max_variant_per_point)
 
 
-# In[180]:
+# In[205]:
 
 
-way_list2 = cp.deepcopy(way_list)
+def run_genetic(G,point_pul,way_list,anceta_prmtr,anketa_bus,anketa_time,prmtr_functions,start_point,stop_point,bgn_time,end_time,
+                tau_to=0,tau_from=0, tau_in=0, max_generation = 5,p_cross=0.9,p_mute=0.2,speed=11.):
+    way_list2 = cp.deepcopy(way_list)
+    gen_count = 0
+    ways_fit = []
+    while(gen_count<max_generation):
+        way_new = []
+        print(gen_count)
+        gen_count+=1
+        fitnes_arr = []
+        print('fitnes')
+        for way in way_list2:
+
+            Fitnes(way,anceta_prmtr,anketa_bus,anketa_time)
+            fitnes_arr.append(way.fitnes)
+        ways_fit.append(fitnes_arr)
+        print('select')
+        way_list2 = select(way_list2 ,k=2)
+
+        print('cross\\mute\\new_way')
+        for chaild1,chaild2 in zip(way_list2[::2],way_list2[1::2]):
+            if random.random()< p_cross:
+                chaild1,chaild2 = cross(chaild1,chaild2)
+                mute(chaild1,G,point_pul,k=3,p_mute=p_mute)
+                mute(chaild2,G,point_pul,k=3,p_mute=p_mute)
+
+                chaild1.calculate_route_futures(G,point_pul,prmtr_functions,bgn_time,end_time,
+                                speed=speed,tau_to=tau_to,tau_from=tau_from,tau_in=tau_in)
+                chaild2.calculate_route_futures(G,point_pul,prmtr_functions,bgn_time,end_time,
+                                speed=speed,tau_to=tau_to,tau_from=tau_from,tau_in=tau_in)
+                way_new.append(chaild1)
+                way_new.append(chaild2)
+            else:
+                way_new.append(chaild1)
+                way_new.append(chaild2)
+        way_list2 = way_new
+    return way_list2
 
 
-# In[200]:
+# In[207]:
 
 
-fitnes_arr = []
-points = []
-for way in way_list2: 
-    print(len(way.route_osmids),len(way.route_points))
-    Fitnes(way,np.array([0.8,0.5,0.2,0.6,0.5,0.4,1.]),1,0.8)
-    #fitnes_arr.append(way.fitnes)
-    #points.extend(way.route_points)
-
-
-# In[181]:
-
-
-get_ipython().run_cell_magic('time', '', "\ngen_count = 0\nways_fit = []\nwhile(gen_count<MAX_GENERATION):\n    way_new = []\n    print(gen_count)\n    gen_count+=1\n    fitnes_arr = []\n    print('fitnes')\n    for way in way_list2:\n        \n        Fitnes(way,np.array([0.8,0.5,0.2,0.6,0.5,0.4,1.]),1,0.8)\n        fitnes_arr.append(way.fitnes)\n    ways_fit.append(fitnes_arr)\n    print('select')\n    way_list2 = select(way_list2 ,k=2)\n    \n    print('cross\\\\mute\\\\new_way')\n    for chaild1,chaild2 in zip(way_list2[::2],way_list2[1::2]):\n        if random.random()< P_CROSS:\n            chaild1,chaild2 = cross(chaild1,chaild2)\n            mute(chaild1,G,point_pul,k=3,p_mute=P_MUTE)\n            mute(chaild2,G,point_pul,k=3,p_mute=P_MUTE)\n            \n            chaild1.calculate_route_futures(G,point_pul,prmtr_functions,bgn_time,end_time,\n                            speed=speed,tau_to=tau_to,tau_from=tau_from,tau_in=tau_in)\n            chaild2.calculate_route_futures(G,point_pul,prmtr_functions,bgn_time,end_time,\n                            speed=speed,tau_to=tau_to,tau_from=tau_from,tau_in=tau_in)\n            way_new.append(chaild1)\n            way_new.append(chaild2)\n        else:\n            way_new.append(chaild1)\n            way_new.append(chaild2)\n    way_list2 = way_new")
-
-
-# In[182]:
-
-
-for i in range(MAX_GENERATION):
-    sum_1=0.
-    #for j in range(POPULATION_SIZE):
-     #   if ways_fit[i][j]:
-      #      sum_1+=1
-    print(max(ways_fit[i]),np.round(ways_fit[i],2))#,sum_1/POPULATION_SIZE)
-
-
-# In[183]:
-
-
-#orig = ox.distance.nearest_nodes(G, *first_board, return_dist=False)
-#dest = ox.distance.nearest_nodes(G, *last_board, return_dist=False)
-routes = ox.shortest_path(G, way_list2[3].route_points[:-1], way_list2[3].route_points[1:], weight="length")
-
-fig, ax = ox.plot_graph_routes(G, routes, route_color="r", route_linewidth=3, node_size=0)
-
-
-# In[194]:
-
-
-pwn = []
-for i,id in enumerate(way_list2[3].route_osmids[1:-1],start=1):
-    
-    pwn.append([dots[dots["osmid"]==id]['name'].values[0],way_list2[3].points_type_arr[i]])
-
-
-# In[195]:
-
-
-pwn
-
-
-# In[199]:
-
-
-list(zip(prmtr_names,prmtr_functions))
-
+def returt_way(way_list,pul,k=3):
+    way_top = []
+    for way in way_list:
+        way_top.append([way.fitnes,way.route_osmids[1:-1]])
+    way_top = sorted(way_top,key=lambda x:x[0])    
+    ways = []
+    for i in range(k):
+        pwn = []
+        for i,ids in enumerate(way_top[i].route_osmids[1:-1],start=1):
+            #pwn.append([pul[pul["osmid"]==ids]['name'].values[0],way_top[i].points_type_arr[i]])
+            pwn.append(ids)
+        ways.append(pwn)
+    return ways
