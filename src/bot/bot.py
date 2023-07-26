@@ -171,8 +171,7 @@ async def message_accept(message: types.Message):
                 await message.answer("Подождите, я рассчитываю маршрут...", reply_markup=types.ReplyKeyboardRemove())
                 data = pr.get_raw_data(pr.tags, ['Москва'])
                 normalized = pr.get_normilized(data)
-                knn = md.get_knn(user.get_vector(), normalized.values, 5)
-                await message.answer(str(knn))
+                (knn_dist, knn_ids) = md.get_knn(user.get_vector(), normalized.values, 30)
 
                 # МЕСТО ДЛЯ ГЕНЕТИЧЕСКОГО АЛГОРИТМА
 
