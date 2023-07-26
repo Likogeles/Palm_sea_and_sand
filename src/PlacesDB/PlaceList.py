@@ -71,7 +71,7 @@ class PlaceList:
                            '{place.popularity}', '{place.time}')
                            """)
 
-    def get_place_by_type(self, place_type):
+    def get_place_by_type(self, place_type) -> list[Place]:
         '''
         Возвращает список мест определённого типа\n
         :param place_type: тип места
@@ -171,7 +171,7 @@ class PlaceList:
     def add_place(self, new_place):
         self.__placeList.append(new_place)
 
-    def get_all_places(self):
+    def get_all_places(self) -> list[Place]:
         return self.__placeList
 
     def save(self):

@@ -166,9 +166,8 @@ class UserList:
                 return user
         return None
 
-
     # Получить всех пользователей
-    def get_all_users(self):
+    def get_all_users(self) -> list[User]:
         '''
         Получить всех пользователей
         '''
