@@ -468,18 +468,21 @@ def run_genetic(G,point_pul,way_list,anceta_prmtr,anketa_bus,anketa_time,prmtr_f
             else:
                 way_new.append(chaild1)
                 way_new.append(chaild2)
-        way_list2 = way_new
+        if gen_count < max_generation:       
+            way_list2 = way_new
     return way_list2
 
 def returt_way(way_list,pul,k=3):
     way_top = []
     for way in way_list:
-        way_top.append([way.fitnes,way.route_osmids[1:-1]])
-    way_top = sorted(way_top,key=lambda x:x[0])    
+        way_top.append([way.fitnes,way])
+    way_top = sorted(way_top,key=lambda x:x[0],reverse=True)    
     ways = []
+    #print(way_top)
     for i in range(k):
         pwn = []
-        for i,ids in enumerate(way_top[i].route_osmids[1:-1],start=1):
+        #print(way_top[i])
+        for i,ids in enumerate(way_top[i][1].route_osmids[1:-1],start=1):
             #pwn.append([pul[pul["osmid"]==ids]['name'].values[0],way_top[i].points_type_arr[i]])
             pwn.append(ids)
         ways.append(pwn)
