@@ -25,7 +25,7 @@ class UserList:
                     '{user.get_time_arrival()}','{user.get_time_departure()}',
                     '{place_arrival_alt} {place_arrival_long} ','{place_departure_alt} {place_departure_long}',
                     '{user.get_place_arrival_flag()}', '{user.get_place_departure_flag()}',
-                    '{user.get_time_arrival_flag()}', '{user.get_time_departure_flag()}')
+                    '{user.get_time_arrival_flag()}', '{user.get_time_departure_flag()}', '{user.get_time_vector_str()}')
                     """)
 
     def __create_user_table(self, cur):
@@ -50,7 +50,8 @@ class UserList:
                     place_arrival_flag varchar(255),
                     place_departure_flag varchar(255),
                     time_arrival_flag varchar(255),
-                    time_departure_flag varchar(255)
+                    time_departure_flag varchar(255),
+                    time_vector varchar(255)
                     )""")
 
     # Удаление и пересохранение списка пользователей
@@ -113,6 +114,7 @@ class UserList:
                 new_user.set_time_departure(user[10])
                 new_user.set_place_arrival(user[11].split())
                 new_user.set_place_departure(user[12].split())
+                new_user.set_time_vector(user[13].split(':'))
 
                 # new_user.set_place_arrival_flag(bool(user[13]))
                 # new_user.set_place_departure_flag(bool(user[14]))

@@ -3,6 +3,9 @@ import re
 import osmnx.geocoder as gc
 import processing.parser as pr
 import processing.model as md
+import genetic.Generator_clear as gen
+import numpy as np
+import pandas as pd
 
 import json
 from UsersDB.User import User
@@ -176,7 +179,7 @@ async def message_accept(message: types.Message):
                 await message.answer("Подождите, я рассчитываю маршрут...", reply_markup=types.ReplyKeyboardRemove())
                 data = pr.get_raw_data(pr.tags, ['Москва'])
                 normalized = pr.get_normilized(data)
-                data_food = pr.get_raw_data(pr.tag_food, ['Москва'])
+                data_food = pr.get_raw_data(pr.tags_food, ['Москва'])
                 normalized_food = pr.get_normilized(data_food)
                 
                 (knn_dist, knn_ids) = md.get_knn(user.get_vector(), normalized.values, 30)
@@ -198,9 +201,9 @@ async def message_accept(message: types.Message):
                 bgn_time = int(user.get_time_arrival().split(":")[0]) * 3600
                 end_time = int(user.get_time_departure().split(":")[0]) * 3600
                 a = user.get_vector()
-                prmtr_functions = user.get_time_vector()
+                prmtr_functions = user.get_time_vector() if len(user.get_time_vector()) else ['in_a_way', 'off', 'off', 'late', 'off', 'early']
                 
-                anceta_prmtr = a[-2]+a[:-2]
+                anceta_prmtr = [a[-2]] + a[:-2]
                 if prmtr_functions[-1]!='off':
                     anceta_prmtr.append(1)
                 else:
@@ -211,26 +214,28 @@ async def message_accept(message: types.Message):
                 eat_pul = data_food.join(normalized_food)
                 place_pul = data.join(normalized)
                 
-                G,speed = get_map_graf(place,drive_type=drive_type)                
+                G,speed = gen.get_map_graf(place,drive_type=drive_type)                
                 gen_pul = gen.get_pul(G,eat_pul,place_pul)
-                
-                
-                
-                way_list = route_gen(G,gen_pul,prmtr_functions,start_point,stop_point,bgn_time,end_time,
+                way_list = gen.route_gen(G,gen_pul,prmtr_functions,start_point,stop_point,bgn_time,end_time,
                               n=POPULATION_SIZE,speed=speed,tau_to=tau_to,tau_from=tau_from,tau_in=tau_in,
                               max_variant_per_point=max_variant_per_point)
-                way_list = run_genetic(G,gen_pul,way_list,anceta_prmtr,anketa_bus,anketa_time,prmtr_functions,start_point,stop_point,bgn_time,end_time,
+                way_list = gen.run_genetic(G,gen_pul,way_list,anceta_prmtr,anketa_bus,anketa_time,prmtr_functions,start_point,stop_point,bgn_time,end_time,
                                 speed=speed,tau_to=tau_to,tau_from=tau_from,tau_in=tau_in,
                                 max_generation = MAX_GENERATION,p_cross=P_CROSS,p_mute=P_MUTE)
-                way_list2 = returt_way(way_list,gen_pul,k=3)
-                answer = f'Маршруты:\n'
-                for i in range(len(way_list2)):
-                    answer+= f'Маршрут №{i}\n'
-                    for indx in way_list2[i]:
-                        answer+= f'{gen_pul[gen_pul["osmid"]==indx].name} {gen_pul[gen_pul["osmid"]==indx].time/60} мин.\n'
+                way_list2, way_list3 = gen.returt_way(way_list,gen_pul,k=1)
+                res = pd.concat([data, data_food])
+                answer = f'Ваш маршрут:\n'
+                for indx in way_list2[0]:
+                    answer+= f'''
+                        Название: {res[res["osmid"] == indx]["name"].values[0]}\n
+                        Тип: {res[res["osmid"] == indx]["type"].values[0]}\n
+                        Адрес: {res[res["osmid"] == indx]["addr:street"].values[0]} {res[res["osmid"] == indx]["addr:housenumber"].values[0]}\n
+                        Расчетное время посещения: {np.round(gen_pul[gen_pul["osmid"]==indx]["time"].to_list()[0]/60, 0)} мин.\n\n
+                        '''
+                
                 #await message.answer(answer, reply_markup=main_keyboard, parse_mode='MarkdownV2')
-                await message.answer(answer, reply_markup=main_keyboard, parse_mode='MarkdownV2')
-  
+                await message.answer(answer, reply_markup=main_keyboard)
+                print(way_list3)
         else:
             await message.answer("Время введено в неправильном формате")
 
@@ -257,7 +262,7 @@ async def resume_question(call: types.CallbackQuery):
             user.add_historic(-0.13)
             user.add_religious(-0.1)
         btn1 = InlineKeyboardButton(text="Мне 15-35 лет", callback_data="teenage")
-        btn2 = InlineKeyboardButton(text="Мне 35-35 лет", callback_data="young")
+        btn2 = InlineKeyboardButton(text="Мне 35-55 лет", callback_data="young")
         btn3 = InlineKeyboardButton(text="Мне 55 и более", callback_data="adult")
         keyboard_inline = InlineKeyboardMarkup()
         keyboard_inline.add(btn1)
@@ -370,7 +375,6 @@ async def resume_question(call: types.CallbackQuery):
             user.add_religious(0.02)
             user.add_natural(0.02)
             user.add_time(0.03)
-        await call.message.answer(str(user.get_vector()))
         await call.message.answer("Спасибо, можете переходить к составлению маршрута", reply_markup=main_keyboard)
 
 @dp.callback_query_handler(text=["addit_yes", "addit_no"])

@@ -48,7 +48,7 @@ class User:
                f"{self.__is_religious} {self.__is_art} {self.__is_natural} " \
                f"{self.__popularity} {self.__time} {self.__is_transport} {self.__time_arrival} {self.__time_departure} " \
                f"{self.__place_arrival_alt} {self.__place_arrival_long} {self.__place_departure_alt} {self.__place_departure_long}" \
-               f"\n{self.__place_arrival_flag} {self.__place_departure_flag} {self.__time_arrival_flag} {self.__time_departure_flag}\n"
+               f"\n{self.__place_arrival_flag} {self.__place_departure_flag} {self.__time_arrival_flag} {self.__time_departure_flag} {self.get_time_vector_str()}\n"
 
     def __init__(self, user_id):
         '''
@@ -145,7 +145,8 @@ class User:
                     place_arrival = '{str(self.__place_arrival_alt)} {str(self.__place_arrival_long)}',
                     place_departure = '{str(self.__place_departure_alt)} {str(self.__place_departure_long)}',
                     place_arrival_flag = '{str(self.__place_arrival_flag)}', place_departure_flag = '{str(self.__place_departure_flag)}',
-                    time_arrival_flag = '{str(self.__time_arrival_flag)}', time_departure_flag = '{str(self.__time_departure_flag)}'
+                    time_arrival_flag = '{str(self.__time_arrival_flag)}', time_departure_flag = '{str(self.__time_departure_flag)}',
+                    time_vector = '{self.get_time_vector_str()}'
                     WHERE user_id = {str(self.__user_id)};
                     """)
             con.commit()
@@ -416,8 +417,24 @@ class User:
         return [self.__is_culture, self.__is_historic, self.__is_religious,
                 self.__is_art, self.__is_natural, self.__popularity, self.__time]
     
+    def get_vector_genetic(self):
+        return [self.__is_culture, self.__is_historic, self.__is_religious,
+                self.__is_art, self.__is_natural, self.__time]
+    
     def get_time_vector(self):
         return self.__time_vector
     
     def add_time_vector_value(self, ans):
         self.__time_vector.append(str(ans))
+        self.__update_user_in_db()
+
+    def get_time_vector_str(self):
+        result = ""
+        for strn in self.__time_vector:
+            result = result + strn + ':'
+        return result
+    
+    def set_time_vector(self, arr):
+        self.__time_vector = arr
+        self.__update_user_in_db
+    

@@ -169,7 +169,7 @@ class WayPoints():
             print(routes[i-1])
             self.route_points
             self.is_ok = False
-            sys.exit(0) 
+            #sys.exit(0) 
 
 
 def early(x):
@@ -415,20 +415,25 @@ def mute(way,G,point_pul,k=3,p_mute=0.1):
             #print('mutant')
             #lon,lat = point_pul[point_pul['pul_id'] == point][['lon','lat']].values
             #print(len(way.route_osmids),len(way.route_points))
-            for type_point in way.points_type_arr[i]:
-                new_points = pd.concat([new_points,point_pul[point_pul[type_point]>0.7]])
-            new_points = new_points.drop_duplicates(subset = 'osmid')
-            new_points = new_points.reset_index(drop=True)
-            new_points = new_points.iloc[random.choices(new_points.index,k=k)]
-            lon = new_points['lon'].to_list()
-            lat = new_points['lat'].to_list()
-            new_points.insert(new_points.shape[1]-1,
-                      'node',ox.distance.nearest_nodes(G, lon,lat,return_dist=False) , 
-                      allow_duplicates = False)
-            
-            way.route_osmids[i] = random.choice(new_points['osmid'].to_list())
-            way.route_points[i] = new_points[new_points['osmid']==way.route_osmids[i]]['node'].values[0]
-            way.prmtrs_arr[i] = new_points[new_points['osmid']==way.route_osmids[i]][prmtr_names]
+            try:
+                for type_point in way.points_type_arr[i]:
+                    if type_point != None:
+                        new_points = pd.concat([new_points,point_pul[point_pul[type_point]>0.7]])
+                if new_points.shape[0] != 0:        
+                    new_points = new_points.drop_duplicates(subset = 'osmid')
+                    new_points = new_points.reset_index(drop=True)
+                    new_points = new_points.iloc[random.choices(new_points.index,k=k)]
+                    lon = new_points['lon'].to_list()
+                    lat = new_points['lat'].to_list()
+                    new_points.insert(new_points.shape[1]-1,
+                            'node',ox.distance.nearest_nodes(G, lon,lat,return_dist=False) , 
+                            allow_duplicates = False)
+                    
+                    way.route_osmids[i] = random.choice(new_points['osmid'].to_list())
+                    way.route_points[i] = new_points[new_points['osmid']==way.route_osmids[i]]['node'].values[0]
+                    way.prmtrs_arr[i] = new_points[new_points['osmid']==way.route_osmids[i]][prmtr_names]
+            except KeyError:
+                pass
 
 
 
@@ -478,15 +483,18 @@ def returt_way(way_list,pul,k=3):
         way_top.append([way.fitnes,way])
     way_top = sorted(way_top,key=lambda x:x[0],reverse=True)    
     ways = []
+    ways2 = []
     #print(way_top)
     for i in range(k):
         pwn = []
-        #print(way_top[i])
-        for i,ids in enumerate(way_top[i][1].route_osmids[1:-1],start=1):
+        pwn2 = []
+        for j,ids in enumerate(way_top[i][1].route_osmids[1:-1],start=1):
             #pwn.append([pul[pul["osmid"]==ids]['name'].values[0],way_top[i].points_type_arr[i]])
             pwn.append(ids)
+            pwn2.append(way_top[i][1].route_points[j])
         ways.append(pwn)
-    return ways
+        ways2.append(pwn2)
+    return ways,ways2
 
 
 
