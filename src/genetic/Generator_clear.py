@@ -5,6 +5,7 @@ import numpy as np
 import osmnx as ox
 import random
 import pandas as pd
+import logging
 import copy as cp
 import networkx as nx
 import sys
@@ -38,14 +39,18 @@ def get_pul(G,eat_pul,place_pul):
 
 
 def get_map_graf(place,drive_type="drive"):
-    G = ox.graph_from_place(place, network_type=drive_type)
-    G = ox.utils_graph.get_largest_component(G, strongly=True)
-    G = ox.add_edge_speeds(G)
+    
+    #G = ox.graph_from_place(place, network_type=drive_type)
+    #G = ox.utils_graph.get_largest_component(G, strongly=True)
+    
     speed = 11.
     if drive_type == "drive":
         speed = 11.
+        G = ox.graph_from_xml('../data/moscow-drive.osm')
     if  drive_type == "walk":
         speed = 1.39
+        G = ox.graph_from_xml('../data/moscow-drive.osm')
+    G = ox.add_edge_speeds(G)
     return G,speed
 
 def wey_control(dt_route_to,dt_route_from,dt_in,dt,tau_to=0,tau_from=0,tau_in=0):
@@ -127,11 +132,9 @@ class WayPoints():
                 s_from = int(sum(ox.utils_graph.route_to_gdf(G, r, "length")["length"])) if dot != self.route_points[-1] else 0.
                 dt_route_to = s_to/speed
                 dt_route_from = int(s_from/speed)
-                print('dot',dot)
                 point = pul[pul['osmid']==self.route_osmids[i]]
                 dt_in = int(point['time'].values[0])
                 #dt_in = int(point_pul[point_pul['pul_id']==dot]['time'].values[0])
-                print('ok')
                 is_ok = wey_control(dt_route_to,dt_route_from,dt_in,free_times,
                                     tau_to=tau_to,tau_from=tau_from,tau_in=tau_in)
 
@@ -263,8 +266,7 @@ def route_gen(G,pul,prmtr_functions,start_point,stop_point,bgn_time,end_time,
         sum_road_times = 0
         sum_stop_times = 0
         try_counter = 0
-        while(free_times>0):
-            print(free_times)  
+        while(free_times>0): 
             #print(prmtr_names[1:])
             #print(prmtr_functions)
             group_p,point_pul,pnames = get_ver_group(pul,prmtr_names[1:],prmtr_functions,
@@ -281,14 +283,11 @@ def route_gen(G,pul,prmtr_functions,start_point,stop_point,bgn_time,end_time,
                 dt_route_to = s_to/speed
                 dt_route_from = int(s_from/speed)
                 #print(s_to,s_from)
-                print()
                 point = point_pul[point_pul['osmid']==point_osmid]
                 dt_in = int(point['time'].values[0])
-                print(dt_in)
                 if wey_control(dt_route_to,dt_route_from,dt_in,free_times,tau_to=tau_to,tau_from=tau_from,tau_in=tau_in):
                     #routes_points[i].append(-1)
                     #routes_points_times[i].append(dt_route_to+tau_to)
-                    print(group_p)
                     routes_points.append(point_id)
                     route_osmids.append(point_osmid)
                     points_type_arr.append(pnames)
@@ -305,7 +304,6 @@ def route_gen(G,pul,prmtr_functions,start_point,stop_point,bgn_time,end_time,
 
                 else:
                     if try_counter > max_variant_per_point:
-                        print(i,'end')
                         routes = ox.shortest_path(G,routes_points[-1],
                                          stop_id, weight="length")
                         #routes_points[i].append(-1)
@@ -325,7 +323,6 @@ def route_gen(G,pul,prmtr_functions,start_point,stop_point,bgn_time,end_time,
                         #sum_road_times[i]+=dt_route+tau_to
                         break
                     else:
-                        print('не нашел')
                         try_counter+=1
             except Exception:
                 try_counter+=1
@@ -445,19 +442,16 @@ def run_genetic(G,point_pul,way_list,anceta_prmtr,anketa_bus,anketa_time,prmtr_f
     ways_fit = []
     while(gen_count<max_generation):
         way_new = []
-        print(gen_count)
         gen_count+=1
         fitnes_arr = []
-        print('fitnes')
         for way in way_list2:
 
             Fitnes(way,anceta_prmtr,anketa_bus,anketa_time)
             fitnes_arr.append(way.fitnes)
         ways_fit.append(fitnes_arr)
-        print('select')
+        way_new.extend(sorted(way_list2,key=lambda x:x.fitnes,reverse=True)[:1])
         way_list2 = select(way_list2 ,k=2)
-
-        print('cross\\mute\\new_way')
+        logging.info(f'count {gen_count} generation...')
         for chaild1,chaild2 in zip(way_list2[::2],way_list2[1::2]):
             if random.random()< p_cross:
                 chaild1,chaild2 = cross(chaild1,chaild2)
@@ -473,6 +467,7 @@ def run_genetic(G,point_pul,way_list,anceta_prmtr,anketa_bus,anketa_time,prmtr_f
             else:
                 way_new.append(chaild1)
                 way_new.append(chaild2)
+        way_new.pop(way_new.index(min(way_new,key=lambda x:x.fitnes)))
         if gen_count < max_generation:       
             way_list2 = way_new
     return way_list2
@@ -491,10 +486,11 @@ def returt_way(way_list,pul,k=3):
         for j,ids in enumerate(way_top[i][1].route_osmids[1:-1],start=1):
             #pwn.append([pul[pul["osmid"]==ids]['name'].values[0],way_top[i].points_type_arr[i]])
             pwn.append(ids)
-            pwn2.append(way_top[i][1].route_points[j])
+            
+        
         ways.append(pwn)
-        ways2.append(pwn2)
-    return ways,ways2
+        ways2.append(way_top[i][1].route_points)
+    return ways, ways2
 
 
 

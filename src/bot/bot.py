@@ -1,11 +1,13 @@
 import logging
 import re
 import osmnx.geocoder as gc
+import osmnx as ox
 import processing.parser as pr
 import processing.model as md
 import genetic.Generator_clear as gen
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 import json
 from UsersDB.User import User
@@ -177,13 +179,17 @@ async def message_accept(message: types.Message):
 
                 # РАССЧЕТ МОДЕЛИ             
                 await message.answer("Подождите, я рассчитываю маршрут...", reply_markup=types.ReplyKeyboardRemove())
-                data = pr.get_raw_data(pr.tags, ['Москва'])
+                # data = pr.get_raw_data(pr.tags, ['Москва'])
+                data = pd.read_csv('../data/moscow.csv')
                 normalized = pr.get_normilized(data)
-                data_food = pr.get_raw_data(pr.tags_food, ['Москва'])
-                normalized_food = pr.get_normilized(data_food)
-                
-                (knn_dist, knn_ids) = md.get_knn(user.get_vector(), normalized.values, 30)
+                # data_food = pr.get_raw_data(pr.tags_food, ['Москва'])
+                data_food = pd.read_csv('../data/food.csv')
+                logging.info("loading maps...")
 
+                normalized_food = pr.get_normilized(data_food)
+                logging.info("starting knn...")
+                (knn_dist, knn_ids) = md.get_knn(user.get_vector(), normalized.values, 30)
+                logging.info("starting genetic algorithm...")
                 MAX_GENERATION =10 #10
                 POPULATION_SIZE = 6
                 P_CROSS = 0.9
@@ -224,16 +230,14 @@ async def message_accept(message: types.Message):
                                 max_generation = MAX_GENERATION,p_cross=P_CROSS,p_mute=P_MUTE)
                 way_list2, way_list3 = gen.returt_way(way_list,gen_pul,k=1)
                 res = pd.concat([data, data_food])
-                answer = f'Ваш маршрут:\n'
+                answer = f'Ваш маршрут:\n\n'
                 for indx in way_list2[0]:
-                    answer+= f'''
-                        Название: {res[res["osmid"] == indx]["name"].values[0]}\n
-                        Тип: {res[res["osmid"] == indx]["type"].values[0]}\n
-                        Адрес: {res[res["osmid"] == indx]["addr:street"].values[0]} {res[res["osmid"] == indx]["addr:housenumber"].values[0]}\n
-                        Расчетное время посещения: {np.round(gen_pul[gen_pul["osmid"]==indx]["time"].to_list()[0]/60, 0)} мин.\n\n
-                        '''
+                    answer+= f'''Название: {res[res["osmid"] == indx]["name"].values[0]}
+Тип: {res[res["osmid"] == indx]["type"].values[0]}
+Расчетное время посещения: {np.round(gen_pul[gen_pul["osmid"]==indx]["time"].to_list()[0]/60, 0)} мин.\n\n'''
+                # routes = ox.shortest_path(G, way_list3[0][:-1], way_list3[0][1:], weight="length")
+                # fig, ax = ox.plot_graph_routes(G, routes, route_color="r", route_linewidth=3, node_size=0)
                 
-                #await message.answer(answer, reply_markup=main_keyboard, parse_mode='MarkdownV2')
                 await message.answer(answer, reply_markup=main_keyboard)
                 print(way_list3)
         else:

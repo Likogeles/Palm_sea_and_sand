@@ -97,6 +97,7 @@ class UserList:
             self.__userList.clear()
             for user in result:
                 user_id = user[0]
+                print(user)
                 if user_id != "None":
                     user_id = int(user_id)
                 else:
@@ -114,13 +115,7 @@ class UserList:
                 new_user.set_time_departure(user[10])
                 new_user.set_place_arrival(user[11].split())
                 new_user.set_place_departure(user[12].split())
-                new_user.set_time_vector(user[13].split(':'))
-
-                # new_user.set_place_arrival_flag(bool(user[13]))
-                # new_user.set_place_departure_flag(bool(user[14]))
-                # new_user.set_time_arrival_flag(bool(user[15]))
-                # new_user.set_time_departure_flag(bool(user[16]))
-
+                new_user.set_time_vector(user[17].split(':'))
                 new_user.set_place_arrival_flag(False)
                 new_user.set_place_departure_flag(False)
                 new_user.set_time_arrival_flag(False)

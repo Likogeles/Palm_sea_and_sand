@@ -435,6 +435,6 @@ class User:
         return result
     
     def set_time_vector(self, arr):
-        self.__time_vector = arr
-        self.__update_user_in_db
+        self.__time_vector = arr[:-1]
+        self.__update_user_in_db()
     
