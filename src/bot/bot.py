@@ -384,6 +384,9 @@ async def resume_question(call: types.CallbackQuery):
 @dp.callback_query_handler(text=["addit_yes", "addit_no"])
 async def addit_opinion(call: types.CallbackQuery):
     if call.data == "addit_yes":
+        user = userList.get_user_by_id(call.from_user.id)
+        if (len(user.get_time_vector())):
+            user.set_time_vector([])
         await call.message.answer("В какой момент времени вы бы хотели посетить _объекты светской культуры_?", reply_markup=time_keyboard, parse_mode='MarkdownV2')
     else:
         await call.message.answer(msg, reply_markup=main_keyboard, parse_mode='MarkdownV2')
